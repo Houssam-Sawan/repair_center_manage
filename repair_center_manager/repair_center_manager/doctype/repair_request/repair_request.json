@@ -1,0 +1,257 @@
+{
+ "actions": [],
+ "allow_events_in_timeline": 1,
+ "allow_import": 1,
+ "autoname": "format:format:RR-{YYYY}-{MM}-{DD}-{#####}",
+ "creation": "2025-10-29 14:08:04.892755",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_mriu",
+  "column_break_lvju",
+  "title",
+  "customer",
+  "customer_name",
+  "column_break_qbta",
+  "date",
+  "posting_time",
+  "set_posting_time",
+  "column_break_xdtq",
+  "amended_from",
+  "workflow_state",
+  "consumed_stock_entry",
+  "labor_time",
+  "device_details_section",
+  "brand",
+  "device_model",
+  "column_break_acpg",
+  "snimei",
+  "imei_2",
+  "fault_details_section",
+  "reported_issue",
+  "condition_photo",
+  "tab_2_tab",
+  "technical_section",
+  "assigned_technician",
+  "used_parts",
+  "notes_tab",
+  "additional_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_mriu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Repair Request",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_lvju",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_qbta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_xdtq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "{customer_name}",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Title",
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "print_hide": 1
+  },
+  {
+   "bold": 1,
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Small Text",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "label": "Customer Name",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "no_copy": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "posting_time",
+   "fieldtype": "Datetime",
+   "label": "Posting Time",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.docstatus==0",
+   "fieldname": "set_posting_time",
+   "fieldtype": "Check",
+   "label": "Edit Posting Date and Time",
+   "permlevel": 1,
+   "print_hide": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "consumed_stock_entry",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Consumed Stock Entry",
+   "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "workflow_state",
+   "fieldtype": "Data",
+   "label": "Workflow state",
+   "read_only": 1
+  },
+  {
+   "fieldname": "labor_time",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "Labor Time"
+  },
+  {
+   "fieldname": "device_details_section",
+   "fieldtype": "Section Break",
+   "label": "Device Details"
+  },
+  {
+   "fieldname": "brand",
+   "fieldtype": "Link",
+   "label": "Brand",
+   "options": "Brand"
+  },
+  {
+   "fieldname": "device_model",
+   "fieldtype": "Link",
+   "label": "Model",
+   "options": "Device Model"
+  },
+  {
+   "fieldname": "column_break_acpg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "snimei",
+   "fieldtype": "Data",
+   "label": "SN/IMEI",
+   "reqd": 1
+  },
+  {
+   "fieldname": "imei_2",
+   "fieldtype": "Data",
+   "label": "IMEI 2"
+  },
+  {
+   "fieldname": "fault_details_section",
+   "fieldtype": "Section Break",
+   "label": "Fault Details"
+  },
+  {
+   "fieldname": "reported_issue",
+   "fieldtype": "Small Text",
+   "label": "Reported Issue"
+  },
+  {
+   "fieldname": "condition_photo",
+   "fieldtype": "Attach",
+   "label": "Condition Photo"
+  },
+  {
+   "fieldname": "tab_2_tab",
+   "fieldtype": "Tab Break",
+   "label": "Technical"
+  },
+  {
+   "fieldname": "technical_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "assigned_technician",
+   "fieldtype": "Link",
+   "label": "Assigned Technician",
+   "options": "User"
+  },
+  {
+   "fieldname": "used_parts",
+   "fieldtype": "Table",
+   "label": "Used Parts",
+   "options": "Repair Request Material"
+  },
+  {
+   "fieldname": "notes_tab",
+   "fieldtype": "Tab Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "additional_notes",
+   "fieldtype": "Small Text",
+   "label": "Additional Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-10-29 16:44:29.078763",
+ "modified_by": "Administrator",
+ "module": "Repair Center Manager",
+ "name": "Repair Request",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}
