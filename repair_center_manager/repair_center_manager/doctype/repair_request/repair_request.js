@@ -10,6 +10,18 @@ frappe.ui.form.on("Repair Request", {
                     }
 			};
 		});
+	},
 
- 	},
- });
+	brand: function(frm) {
+		frm.set_query("device_model", function (doc) {
+			return {
+				filters: [
+					["Device Model", "device_brand", "=", doc.brand]
+				]
+			};
+		});
+	},
+	
+});
+
+

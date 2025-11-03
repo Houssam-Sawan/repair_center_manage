@@ -31,7 +31,7 @@
   "brand",
   "device_model",
   "column_break_acpg",
-  "snimei",
+  "serial_no",
   "imei_2",
   "fault_details_section",
   "reported_issue",
@@ -39,7 +39,9 @@
   "tab_2_tab",
   "technical_section",
   "assigned_technician",
-  "used_parts",
+  "required_parts",
+  "internal_log_section",
+  "repair_log",
   "notes_tab",
   "additional_notes"
  ],
@@ -169,12 +171,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "snimei",
-   "fieldtype": "Data",
-   "label": "SN/IMEI",
-   "reqd": 1
-  },
-  {
    "fieldname": "imei_2",
    "fieldtype": "Data",
    "label": "IMEI 2"
@@ -208,12 +204,6 @@
    "fieldtype": "Link",
    "label": "Assigned Technician",
    "options": "User"
-  },
-  {
-   "fieldname": "used_parts",
-   "fieldtype": "Table",
-   "label": "Used Parts",
-   "options": "Repair Request Material"
   },
   {
    "fieldname": "notes_tab",
@@ -264,13 +254,37 @@
    "fieldtype": "Link",
    "label": "Contact",
    "options": "Contact"
+  },
+  {
+   "fieldname": "serial_no",
+   "fieldtype": "Data",
+   "label": "SN/IMEI",
+   "reqd": 1
+  },
+  {
+   "fieldname": "required_parts",
+   "fieldtype": "Table",
+   "label": "Spare Parts",
+   "options": "Repair Request Material"
+  },
+  {
+   "fieldname": "internal_log_section",
+   "fieldtype": "Section Break",
+   "label": "Internal Log"
+  },
+  {
+   "fieldname": "repair_log",
+   "fieldtype": "Table",
+   "label": "Repair Log",
+   "options": "Repair Log",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-30 12:49:22.076462",
+ "modified": "2025-11-03 12:02:06.088706",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
