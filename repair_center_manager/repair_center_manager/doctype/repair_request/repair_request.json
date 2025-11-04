@@ -34,6 +34,8 @@
   "serial_no",
   "imei_2",
   "fault_details_section",
+  "fault_category",
+  "section_break_fhpy",
   "reported_issue",
   "condition_photo",
   "tab_2_tab",
@@ -278,13 +280,22 @@
    "label": "Repair Log",
    "options": "Repair Log",
    "read_only": 1
+  },
+  {
+   "fieldname": "fault_category",
+   "fieldtype": "Data",
+   "label": "Fault Category"
+  },
+  {
+   "fieldname": "section_break_fhpy",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-03 12:02:06.088706",
+ "modified": "2025-11-03 14:37:58.471186",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
