@@ -9,17 +9,17 @@ frappe.ui.form.on("Repair Request", {
     onload: function(frm) {
         // Filter for assigned_technician
         // Only show users who are 'Technician' role AND are linked to the selected Service Center 
-/*         frm.set_query('assigned_technician', function(doc) {
+        frm.set_query('assigned_technician', function(doc) {
             if (!doc.service_center) {
                 frappe.throw(__("Please select a Service Center first."));
             }
             return {
                 query: 'repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.get_technicians_by_service_center',
                 filters: {
-                    'service_center': doc.service_center
+                   // 'service_center': doc.service_center
                 }
             };
-        }); */
+        });
 
         // Filter for customer contact
         frm.set_query('contact', function() {
@@ -34,8 +34,32 @@ frappe.ui.form.on("Repair Request", {
         });
     },
  	refresh: function(frm) {
-        // Safety check to ensure no custom buttons were added accidentally
-        frm.clear_custom_buttons();
+
+        frm.set_intro("");
+        let state = frm.doc.status;
+
+        if (state !== "Not Saved") {
+            frm.disable_save();
+        }
+        // Add "Assign & Start Repair" button only if docstatus is 0 (Draft)
+        if(state === "Open" && (frappe.user.has_role("Receptionist") || frappe.user.has_role("System Manager"))) {
+            frm.add_custom_button("Assign & Start Repair", () => {
+                frappe.call({
+                    method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.assign_technician_and_start",
+                    args: { docname: frm.doc.name ,
+                                assigned_technician: frm.doc.assigned_technician
+                    },
+                    callback: () => frm.reload_doc()
+                });
+            });
+        }        
+
+/*         if (frm.doc.docstatus === 0) {
+            frm.add_custom_button(__('test Assign & Start Repair'), function() {
+                        // This uses the newly assigned technician and starts the process.
+                        frm.call('test');
+                    }).addClass('btn-primary');
+        } */
         
         // Display a helpful reminder message for the Receptionist.
         if (frm.doc.status === 'Open' && frm.doc.docstatus === 0 && !frm.doc.assigned_technician && frappe.user_has_role('Receptionist')) {
@@ -58,7 +82,7 @@ frappe.ui.form.on("Repair Request", {
 	    /**
      * Fetch Service Center Abbreviation
      */
-    service_center: function(frm) {
+/*     service_center: function(frm) {
         if (frm.doc.service_center) {
             frappe.db.get_value('Service Center', frm.doc.service_center, 'branch')
                 .then(r => {
@@ -73,7 +97,7 @@ frappe.ui.form.on("Repair Request", {
             frm.set_value('assigned_technician', null);
             frm.refresh_field('assigned_technician');
         }
-    },
+    }, */
 
 	customer: function(frm) {
         if (frm.doc.customer) {
@@ -150,3 +174,8 @@ frappe.ui.form.on('Repair Request Part', {
 
 
 
+function test_button() {
+    frappe.call({
+        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.test",
+    });
+}

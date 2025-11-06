@@ -8,17 +8,23 @@ from frappe.model.document import Document
 
 
 class RepairRequest(Document):
+		
+	
 	def validate(self):
 		self.test_validate()
 		self.log_status_change()
+		if self.is_new():
+			self.status = "Open"
 
 	def before_save(self):
 		self.log_status_change()
+		
+
 
 	def on_submit(self):
 		# Add any logic for on submit (if used)
 		pass
-
+	
 	def on_update(self):
 		self.handle_notifications()
 
@@ -93,6 +99,9 @@ class RepairRequest(Document):
 			pluck="name"
 		)
 
+	@frappe.whitelist()
+	def test(docname):
+		frappe.msgprint("Test function called successfully.")
 
 	def create_notification(self, user, subject, doc=None):
 		"""Helper to create a standard Notification Log."""
@@ -110,19 +119,21 @@ class RepairRequest(Document):
 # --- Whitelisted Functions (Callable from Client) ---
 
 @frappe.whitelist()
-def assign_technician_and_start(docname):
+def assign_technician_and_start(docname,assigned_technician=None):
 	"""
 	Called by the Receptionist to assign the request, set status to In Progress,
 	and notify the assigned technician.
 	"""
-	doc = frappe.get_doc("Repair Request", docname)
+
+	doc =  frappe.get_doc("Repair Request", docname)
 
 	if doc.status != "Open":
 		frappe.throw("Cannot assign and start a repair that is not in 'Open' status.")
 
-	if not doc.assigned_technician:
+	if not assigned_technician:
 		frappe.throw("Please select an Assigned Technician before starting the repair.")
 
+	doc.assigned_technician = assigned_technician
 	doc.status = "In Progress"
 	doc.add_log_entry(f"Assigned to {doc.assigned_technician} and set status to 'In Progress' by {frappe.session.user}")
 	doc.save()
@@ -183,10 +194,9 @@ def get_technicians_by_service_center(doctype, txt, search_service_center, start
 	users = frappe.get_all(
 		"User",
 		filters={
-""" 			"user": ["in", assigned_users],
-			"user_roles": {"role": "Technician"}, # Check if user has the Technician role
-			"enabled": 1,
-			"name": ("like", f"%{txt}%") """
+			"name": ("in", assigned_users),
+			"user_roles": {"role": "Technician"},
+			"full_name": ("like", f"%{txt}%")
 		},
 		limit_start=start,
 		limit_page_length=page_len,
@@ -235,6 +245,9 @@ def mark_pending_from_main(docname):
 	# Suggest creating a Material Request
 	frappe.msgprint(_("Status set to 'Pending for Spare Parts'. Please create a Material Request to the Main Warehouse."), alert=True)
 
+@frappe.whitelist()
+def test(docname):
+	frappe.msgprint("Test function called successfully.")
 
 @frappe.whitelist()
 def create_stock_transfer(docname):

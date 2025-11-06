@@ -11,6 +11,7 @@
   "service_center",
   "column_break_puhp",
   "status",
+  "assigned_technician",
   "section_break_mriu",
   "column_break_lvju",
   "title",
@@ -24,7 +25,6 @@
   "set_posting_time",
   "column_break_xdtq",
   "amended_from",
-  "workflow_state",
   "consumed_stock_entry",
   "labor_time",
   "device_details_section",
@@ -35,12 +35,13 @@
   "imei_2",
   "fault_details_section",
   "fault_category",
+  "column_break_rfvu",
+  "fault",
   "section_break_fhpy",
   "reported_issue",
   "condition_photo",
   "tab_2_tab",
   "technical_section",
-  "assigned_technician",
   "required_parts",
   "internal_log_section",
   "repair_log",
@@ -139,13 +140,6 @@
    "read_only": 1
   },
   {
-   "bold": 1,
-   "fieldname": "workflow_state",
-   "fieldtype": "Data",
-   "label": "Workflow state",
-   "read_only": 1
-  },
-  {
    "fieldname": "labor_time",
    "fieldtype": "Float",
    "hidden": 1,
@@ -238,20 +232,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "bold": 1,
-   "default": "Open",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Status",
-   "options": "Open\nIn Progress\nPending Parts Allocation\nPending for Spare Parts\nParts Allocated\nRepaired\nDelivered\nCancelled",
-   "print_hide": 1,
-   "reqd": 1
-  },
-  {
    "fieldname": "customer_contact",
    "fieldtype": "Link",
    "label": "Contact",
@@ -283,19 +263,47 @@
   },
   {
    "fieldname": "fault_category",
-   "fieldtype": "Data",
-   "label": "Fault Category"
+   "fieldtype": "Link",
+   "label": "Fault Category",
+   "link_filters": "[[\"Fault Category\",\"is_group\",\"=\",1]]",
+   "options": "Fault Category"
   },
   {
    "fieldname": "section_break_fhpy",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_rfvu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fault",
+   "fieldtype": "Link",
+   "label": "Fault",
+   "link_filters": "[[\"Fault Category\",\"is_group\",\"=\",0],[\"Fault Category\",\"parent_fault_category\",\"=\",\"eval:doc.fault_category\"]]",
+   "options": "Fault Category"
+  },
+  {
+   "bold": 1,
+   "default": "Not Saved",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Not Saved\nOpen\nIn Progress\nPending Parts Allocation\nPending for Spare Parts\nParts Allocated\nRepaired\nDelivered\nCancelled",
+   "print_hide": 1,
+   "read_only": 1,
+   "show_on_timeline": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-03 14:37:58.471186",
+ "modified": "2025-11-05 16:09:48.169611",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
@@ -321,7 +329,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "customer_name",
  "track_changes": 1,
  "track_seen": 1,
  "track_views": 1
