@@ -18,7 +18,7 @@
   "service_center_abbr",
   "customer",
   "customer_name",
-  "customer_contact",
+  "customer_mobile_number",
   "column_break_qbta",
   "date",
   "posting_time",
@@ -33,16 +33,17 @@
   "column_break_acpg",
   "serial_no",
   "imei_2",
-  "fault_details_section",
-  "fault_category",
-  "column_break_rfvu",
-  "fault",
   "section_break_fhpy",
   "reported_issue",
   "condition_photo",
   "tab_2_tab",
+  "fault_details_section",
+  "fault_category",
+  "column_break_rfvu",
+  "fault",
   "technical_section",
   "required_parts",
+  "total",
   "internal_log_section",
   "repair_log",
   "notes_tab",
@@ -160,6 +161,7 @@
    "fieldname": "device_model",
    "fieldtype": "Link",
    "label": "Model",
+   "link_filters": "[\"Device Model\", \"device_brand\", \"=\", \"eval:doc.brand\"]",
    "options": "Device Model"
   },
   {
@@ -232,12 +234,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "customer_contact",
-   "fieldtype": "Link",
-   "label": "Contact",
-   "options": "Contact"
-  },
-  {
    "fieldname": "serial_no",
    "fieldtype": "Data",
    "label": "SN/IMEI",
@@ -279,7 +275,7 @@
   {
    "fieldname": "fault",
    "fieldtype": "Link",
-   "label": "Fault",
+   "label": "Fault Details",
    "link_filters": "[[\"Fault Category\",\"is_group\",\"=\",0],[\"Fault Category\",\"parent_fault_category\",\"=\",\"eval:doc.fault_category\"]]",
    "options": "Fault Category"
   },
@@ -297,13 +293,27 @@
    "print_hide": 1,
    "read_only": 1,
    "show_on_timeline": 1
+  },
+  {
+   "fetch_from": "customer.mobile_no",
+   "fieldname": "customer_mobile_number",
+   "fieldtype": "Data",
+   "label": "Mobile Number",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-05 16:09:48.169611",
+ "modified": "2025-11-06 16:21:22.368608",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",

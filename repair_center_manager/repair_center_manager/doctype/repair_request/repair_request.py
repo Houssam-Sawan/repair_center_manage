@@ -5,6 +5,11 @@ import frappe
 from frappe import _, msgprint, throw
 from frappe.utils import get_link_to_form
 from frappe.model.document import Document
+from frappe.desk.doctype.notification_log.notification_log import (
+	enqueue_create_notification,
+	get_title,
+	get_title_html,
+)
 
 
 class RepairRequest(Document):
@@ -103,7 +108,8 @@ class RepairRequest(Document):
 	def test(docname):
 		frappe.msgprint("Test function called successfully.")
 
-	def create_notification(self, user, subject, doc=None):
+
+	def create_notification(self, user, subject, doc=None, channel="System Notification"):
 		"""Helper to create a standard Notification Log."""
 		if not doc:
 			doc = self
@@ -113,6 +119,7 @@ class RepairRequest(Document):
 		notification.subject = subject
 		notification.document_type = doc.doctype
 		notification.document_name = doc.name
+		notification.channel = channel
 		notification.insert(ignore_permissions=True)
 		frappe.db.commit() # Notifications need explicit commit
 
@@ -141,7 +148,8 @@ def assign_technician_and_start(docname,assigned_technician=None):
 	# Notify technician
 	doc.create_notification(
 		user=doc.assigned_technician,
-		subject=f"New Repair Request assigned: {doc.name} - Status set to In Progress."
+		subject=f"New Repair Request assigned: {doc.name} - Status set to In Progress.",
+		channel="System Notification"
 	)
 
 	frappe.msgprint(_(f"Repair successfully assigned to {doc.assigned_technician} and started."), alert=True)
@@ -175,17 +183,29 @@ def get_item_availability(item_code, service_center):
 		return 0
 
 @frappe.whitelist()
-def get_technicians_by_service_center(doctype, txt, search_service_center, start, page_len, filters):
+@frappe.validate_and_sanitize_search_inputs
+def get_technicians_by_service_center(doctype, txt, searchfield, start, page_len, filters):
 	"""
 	Whitelisted function to filter Technicians for the assigned_technician link field.
 	This replaces the standard frappe.set_query logic which is less flexible for joins.
 	"""
+	search_service_center = filters.get("search_service_center") if filters else None
+	users_with_role = frappe.get_all(
+        "Has Role",
+        filters={"role": "Technician"},
+        pluck="parent"
+    )
+
+	if not users_with_role:
+		return []
+	
 	# 1. Get users linked to the specified service_center
 	assigned_users = frappe.get_all(
 		"Service Center Assignment",
-		filters={"service_center": search_service_center},
-		pluck="user"
-	)
+		filters={"service_center": search_service_center ,
+				 "user": ["in", users_with_role]},
+		pluck="name"
+	) 	
 
 	if not assigned_users:
 		return []
@@ -195,7 +215,7 @@ def get_technicians_by_service_center(doctype, txt, search_service_center, start
 		"User",
 		filters={
 			"name": ("in", assigned_users),
-			"user_roles": {"role": "Technician"},
+			"Enabled": 1,
 			"full_name": ("like", f"%{txt}%")
 		},
 		limit_start=start,

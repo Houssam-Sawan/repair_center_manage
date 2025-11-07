@@ -3,46 +3,43 @@
 
 frappe.ui.form.on("Repair Request", {
 
+    items_add: calculate_total,
+    items_remove: calculate_total,
+
 	    /**
      * Onload: Set filters
      */
     onload: function(frm) {
-        // Filter for assigned_technician
-        // Only show users who are 'Technician' role AND are linked to the selected Service Center 
-        frm.set_query('assigned_technician', function(doc) {
-            if (!doc.service_center) {
-                frappe.throw(__("Please select a Service Center first."));
-            }
-            return {
-                query: 'repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.get_technicians_by_service_center',
-                filters: {
-                   // 'service_center': doc.service_center
-                }
-            };
-        });
 
-        // Filter for customer contact
-        frm.set_query('contact', function() {
-            if (frm.doc.customer) {
-                return {
-                    filters: {
-                        'link_doctype': 'Customer',
-                        'link_name': frm.doc.customer
-                    }
-                };
-            }
-        });
+
     },
  	refresh: function(frm) {
 
         frm.set_intro("");
         let state = frm.doc.status;
 
+                // Filter for assigned_technician
+        // Only show users who are 'Technician' role AND are linked to the selected Service Center 
+        frm.set_query('assigned_technician', function(doc) {
+            if (!doc.service_center) {
+                frappe.throw(__("Please select a Service Center first."));
+            }
+
+            return {
+                query: 'repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.get_technicians_by_service_center',
+                filters: {
+                    search_service_center: frm.doc.service_center
+                }
+               
+            };
+        });
+
         if (state !== "Not Saved") {
             frm.disable_save();
         }
         // Add "Assign & Start Repair" button only if docstatus is 0 (Draft)
-        if(state === "Open" && (frappe.user.has_role("Receptionist") || frappe.user.has_role("System Manager"))) {
+        if(state === "Open" && (frappe.user.has_role("Receptionist") || frappe.user.has_role("SC Manager"))) {
+            
             frm.add_custom_button("Assign & Start Repair", () => {
                 frappe.call({
                     method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.assign_technician_and_start",
@@ -51,32 +48,11 @@ frappe.ui.form.on("Repair Request", {
                     },
                     callback: () => frm.reload_doc()
                 });
-            });
+            }).addClass("btn-primary");
         }        
 
-/*         if (frm.doc.docstatus === 0) {
-            frm.add_custom_button(__('test Assign & Start Repair'), function() {
-                        // This uses the newly assigned technician and starts the process.
-                        frm.call('test');
-                    }).addClass('btn-primary');
-        } */
-        
-        // Display a helpful reminder message for the Receptionist.
-        if (frm.doc.status === 'Open' && frm.doc.docstatus === 0 && !frm.doc.assigned_technician && frappe.user_has_role('Receptionist')) {
-             frm.msg_box({
-                title: __('Assignment Required'),
-                indicator: 'orange',
-                message: __('Please select an **Assigned Technician** before using the **Assign & Start** action button.')
-            });
-        }
 
-        frm.set_query("customer_contact", function (doc) {
-			return {
-				filters: {
-					customer: doc.customer,
-                    }
-			};
-		});
+
 	},
 
 	    /**
@@ -99,36 +75,15 @@ frappe.ui.form.on("Repair Request", {
         }
     }, */
 
-	customer: function(frm) {
-        if (frm.doc.customer) {
-            frappe.db.get_value('Customer', frm.doc.customer, 'customer_name')
-                .then(r => {
-                    if (r.message) {
-                        frm.set_value('customer_name', r.message.customer_name);
-                    }
-                });
-            // Clear contact and refresh filter
-            frm.set_value('contact', null);
-            frm.refresh_field('contact');
-        }
-    },
 
-	brand: function(frm) {
-		frm.set_query("device_model", function (doc) {
-			return {
-				filters: [
-					["Device Model", "device_brand", "=", doc.brand]
-				]
-			};
-		});
-	},
+
 	
 });
 
 /**
  * Child Table: Repair Request Part
  */
-frappe.ui.form.on('Repair Request Part', {
+frappe.ui.form.on('Repair Request Material', {
     /**
      * When item_code is selected, fetch details
      */
@@ -161,6 +116,32 @@ frappe.ui.form.on('Repair Request Part', {
             } else {
                 frappe.msgprint(__("Please set the Service Center first to check stock availability."));
             }
+
+            // Fetch latest selling price
+        frappe.call({
+            method: 'frappe.client.get_list',
+            args: {
+                doctype: 'Item Price',
+                fields: ['price_list_rate', 'price_list', 'valid_from'],
+                filters: {
+                    item_code: row.item_code,
+                    selling: 1,
+                    price_list: 'Standard Selling'
+                },
+                order_by: 'modified desc',
+                limit_page_length: 1
+            },
+            callback: function(r) {
+                if (r.message && r.message.length) {
+                    let price = r.message[0].price_list_rate;
+                    frappe.model.set_value(cdt, cdn, 'price', price);
+                    calculate_total(frm, cdt, cdn);
+                } else {
+                    frappe.model.set_value(cdt, cdn, 'price', 0);
+                    frappe.msgprint(__('No selling price found for this item'));
+                }
+            }
+        });
         }
     },
 
@@ -169,7 +150,12 @@ frappe.ui.form.on('Repair Request Part', {
      */
     required_parts_refresh: function(frm) {
         // This is a placeholder for any logic on table refresh
-    }
+    },
+
+    required_qty: calculate_total,
+    price: calculate_total,
+    
+    
 });
 
 
@@ -178,4 +164,16 @@ function test_button() {
     frappe.call({
         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.test",
     });
+}
+
+function calculate_total(frm, cdt, cdn) {
+    let total = 0;
+    (frm.doc.required_parts || []).forEach(row => {
+        if (row.required_qty && row.price) {
+            total += row.required_qty * row.price;
+        }
+    });
+
+    // Set total field value in parent doc
+    frm.set_value('total', total);
 }
