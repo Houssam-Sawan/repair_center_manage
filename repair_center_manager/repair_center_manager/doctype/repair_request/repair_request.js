@@ -87,12 +87,7 @@ frappe.ui.form.on("Repair Request", {
                             args: { 
                                 docname: frm.doc.name 
                             },
-                            callback: function(r) {
-                                if (!r.exc) {
-                                    frappe.msgprint(__('Material Request {0} created successfully', [r.message]));
-                                    frm.reload_doc();
-                                }
-                            }
+                            callback: () => frm.reload_doc()
                         });
                     }).addClass('btn-primary');
                     
@@ -106,7 +101,38 @@ frappe.ui.form.on("Repair Request", {
                         frm.save();
                     }).addClass('btn-success');
                 }
-            }                    
+            }  
+
+            // =================================================================
+            // == STATUS: Pending Parts Allocation (Warehouse Action) ==
+            // =================================================================
+            if (frm.doc.status === 'Pending Parts Allocation' && (frappe.user.has_role('Service Center Warehouse Manager') || frappe.user.has_role("SC Manager")) ) {
+                // Button to create Stock Entry (Material Transfer)
+                frm.add_custom_button(__('Allocate Parts'), function() {
+                    frappe.call({
+                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.create_stock_transfer",
+                        args: { 
+                            docname: frm.doc.name 
+                        },
+                        callback: () => frm.reload_doc()
+                    });
+                    }).addClass('btn-primary');
+                
+                // Button to mark as pending from main warehouse
+                frm.add_custom_button(__('Mark Pending'), function() {
+                    frappe.call({
+                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.mark_pending_from_main",
+                        args: { 
+                            docname: frm.doc.name 
+                        },
+                        callback: () => frm.reload_doc()
+                    });
+                }).addClass('btn-warning');
+            }
+
+                        // =================================================================
+            // == STATUS:  Pending for Spare Parts (Warehouse Action) ==
+            // =================================================================
 
 
 	},

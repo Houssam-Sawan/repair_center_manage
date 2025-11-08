@@ -247,7 +247,9 @@
    "fieldname": "required_parts",
    "fieldtype": "Table",
    "label": "Spare Parts",
-   "options": "Repair Request Material"
+   "options": "Repair Request Material",
+   "read_only": 1,
+   "read_only_depends_on": "eval:!frappe.user.has_role(\"Technician\")"
   },
   {
    "fieldname": "internal_log_section",
@@ -316,7 +318,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-08 03:12:15.012700",
+ "modified": "2025-11-08 11:27:39.539517",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",

@@ -20,8 +20,6 @@ class RepairRequest(Document):
 		self.log_status_change()
 		if self.is_new():
 			self.status = "Open"
-		if self.status == "In Progress" or self.status == "Pending Parts Allocation" or self.status == "Pending for Spare Parts" or self.status == "Parts Allocated" or self.status == "Repaired":
-			self.validate_Inprogress()
 		
 		if "Service Center Warehouse Manager" in frappe.get_roles(frappe.session.user) :
 			self.restrict_edits()
@@ -51,9 +49,9 @@ class RepairRequest(Document):
 
 	def restrict_edits(self):
 		"""Prevent field edits after certain workflow states or by specific roles."""
-		if self.status in ["Pending Parts Allocation", "Parts Allocated"]:
+		if self.status in ["Pending Parts Allocation", "Parts Allocated"," Repaired", "Delivered", "Pending for Spare Parts"]:
             # Bypass for managers or admins
-			if "Warehouse Manager" not in frappe.get_roles(frappe.session.user) and not frappe.session.user == "Administrator":
+			if "SC Manager" not in frappe.get_roles(frappe.session.user) and not frappe.session.user == "Administrator":
                 # Compare current values with database values
 				if not self.is_new():
 					old_doc = frappe.get_doc(self.doctype, self.name)
@@ -330,6 +328,7 @@ def create_stock_transfer(docname):
 	for the warehouse manager to fulfill.
 	"""
 	doc = frappe.get_doc("Repair Request", docname)
+
 	if doc.status != "Pending Parts Allocation":
 		frappe.throw("Can only allocate parts when status is 'Pending Parts Allocation'.")
 
@@ -337,6 +336,29 @@ def create_stock_transfer(docname):
 	if not sc_details.store_warehouse or not sc_details.wip_warehouse:
 		frappe.throw("Service Center is missing Store or WIP Warehouse configuration.")
 
+	doc.restrict_edits()  # Ensure no edits are made before creating stock transfer
+	existing = frappe.db.exists("Stock Entry", {"custom_repair_request": doc.name})
+	if existing:
+		
+		link = get_link_to_form("Stock Entry", existing)
+		frappe.msgprint(f"Material Transfer already exists: {link}")
+		# Update status on Repair Request
+		doc.status = "Parts Allocated"
+		doc.add_log_entry(f"Stock Entry {link} created for parts transfer.")
+
+		# Update issued qty (Ideally, this happens on Stock Entry submit, but for simplicity we do it here)
+		for item in doc.required_parts:
+			item.issued_qty = item.required_qty
+
+		doc.save()
+
+	# Notify technician
+		doc.create_notification(
+			user=doc.assigned_technician,
+			subject=f"Parts for Repair {doc.name} have been allocated.",
+			channel="System Notification"
+		)
+		return
 	# Create the Stock Entry
 	se = frappe.new_doc("Stock Entry")
 	se.stock_entry_type = "Material Transfer"
@@ -369,11 +391,9 @@ def create_stock_transfer(docname):
 
 	if total_issued == 0:
 		frappe.throw("No parts to issue or all parts have already been issued.")
-
 	# Save and return to client
 	se.insert()
 	frappe.db.commit()
-
 	# Update status on Repair Request
 	doc.status = "Parts Allocated"
 	doc.add_log_entry(f"Stock Entry {se.name} created for parts transfer.")
