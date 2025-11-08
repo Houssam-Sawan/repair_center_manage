@@ -40,7 +40,7 @@
   "fault_details_section",
   "fault_category",
   "column_break_rfvu",
-  "fault",
+  "fault_description",
   "technical_section",
   "required_parts",
   "total",
@@ -111,6 +111,7 @@
    "fieldtype": "Date",
    "label": "Date",
    "no_copy": 1,
+   "read_only": 1,
    "reqd": 1,
    "search_index": 1
   },
@@ -120,6 +121,8 @@
    "fieldtype": "Datetime",
    "label": "Posting Time",
    "no_copy": 1,
+   "read_only": 1,
+   "read_only_depends_on": "eval:!doc.set_posting_time",
    "reqd": 1
   },
   {
@@ -128,7 +131,7 @@
    "fieldname": "set_posting_time",
    "fieldtype": "Check",
    "label": "Edit Posting Date and Time",
-   "permlevel": 1,
+   "permlevel": 2,
    "print_hide": 1
   },
   {
@@ -161,7 +164,7 @@
    "fieldname": "device_model",
    "fieldtype": "Link",
    "label": "Model",
-   "link_filters": "[\"Device Model\", \"device_brand\", \"=\", \"eval:doc.brand\"]",
+   "link_filters": "[[\"Device Model\",\"device_brand\",\"=\",\"eval:doc.brand\"]]",
    "options": "Device Model"
   },
   {
@@ -189,6 +192,7 @@
    "label": "Condition Photo"
   },
   {
+   "depends_on": "eval:frappe.user.has_role(\"Technician\") || frappe.user.has_role(\"Service Center Warehouse Manager\")",
    "fieldname": "tab_2_tab",
    "fieldtype": "Tab Break",
    "label": "Technical"
@@ -273,13 +277,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "fault",
-   "fieldtype": "Link",
-   "label": "Fault Details",
-   "link_filters": "[[\"Fault Category\",\"is_group\",\"=\",0],[\"Fault Category\",\"parent_fault_category\",\"=\",\"eval:doc.fault_category\"]]",
-   "options": "Fault Category"
-  },
-  {
    "bold": 1,
    "default": "Not Saved",
    "fieldname": "status",
@@ -302,18 +299,24 @@
    "read_only": 1
   },
   {
-   "bold": 1,
    "fieldname": "total",
    "fieldtype": "Currency",
    "label": "Total",
    "read_only": 1
+  },
+  {
+   "fieldname": "fault_description",
+   "fieldtype": "Link",
+   "label": "Fault Details",
+   "link_filters": "[[\"Fault Category\",\"is_group\",\"=\",0],[\"Fault Category\",\"parent_fault_category\",\"=\",\"eval:doc.fault_category\"]]",
+   "options": "Fault Category"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-06 16:21:22.368608",
+ "modified": "2025-11-08 03:12:15.012700",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",

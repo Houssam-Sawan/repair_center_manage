@@ -20,10 +20,21 @@ class RepairRequest(Document):
 		self.log_status_change()
 		if self.is_new():
 			self.status = "Open"
+		if self.status == "In Progress" or self.status == "Pending Parts Allocation" or self.status == "Pending for Spare Parts" or self.status == "Parts Allocated" or self.status == "Repaired":
+			self.validate_Inprogress()
+		
+		if "Service Center Warehouse Manager" in frappe.get_roles(frappe.session.user) :
+			self.restrict_edits()
+		if self.status in ["Pending Parts Allocation", "Parts Allocated"]:
+			# Ensure at least one part is requested
+			if not self.required_parts or len(self.required_parts) == 0:
+				frappe.throw(_("Please add at least one required part before setting status to 'Pending Parts Allocation'."))
 
 	def before_save(self):
 		self.log_status_change()
 		
+
+
 
 
 	def on_submit(self):
@@ -38,6 +49,40 @@ class RepairRequest(Document):
 		if self.serial_no == "12345":
 			frappe.throw(_("Invalid SN/IMEI number."))
 
+	def restrict_edits(self):
+		"""Prevent field edits after certain workflow states or by specific roles."""
+		if self.status in ["Pending Parts Allocation", "Parts Allocated"]:
+            # Bypass for managers or admins
+			if "Warehouse Manager" not in frappe.get_roles(frappe.session.user) and not frappe.session.user == "Administrator":
+                # Compare current values with database values
+				if not self.is_new():
+					old_doc = frappe.get_doc(self.doctype, self.name)
+					changed_fields = []
+                    
+					for field in self.meta.fields:
+						# Skip automatically updated system fields
+						# if field.fieldname in ("modified", "modified_by", "owner"):
+						# continue
+						if field.read_only or field.hidden:
+							continue
+
+						old_value = old_doc.get(field.fieldname)
+						new_value = self.get(field.fieldname)
+						
+						if old_value != new_value:
+							changed_fields.append(field.label or field.fieldname)
+					if changed_fields:
+						frappe.throw(
+                            f"You cannot modify this document in state <b>{self.status}</b>. "
+                            f"Changed fields: {', '.join(changed_fields)}"
+                        )
+
+	def validate_Inprogress(self):
+		# Example validation: Ensure assigned technician is set when status is In Progress
+		if not self.assigned_technician:
+			frappe.throw(_("Assigned Technician must be set when status is 'In Progress'."))
+		if not self.fault_category or not self.fault_description:
+			frappe.throw(_("Please provide the Fault Category and Fault Description before requesting parts."))
 
 	def log_status_change(self):
 		"""Adds a new row to the repair_log child table if status has changed."""
@@ -69,7 +114,8 @@ class RepairRequest(Document):
 			for user in receptionists:
 				self.create_notification(
 					user=user,
-					subject=f"Repair {self.name} is complete and ready for delivery."
+					subject=f"Repair {self.name} is complete and ready for delivery.",
+					channel="System Notification"
 				)
 
 		# 2. Status -> Pending Parts -> Notify Warehouse Manager
@@ -79,17 +125,24 @@ class RepairRequest(Document):
 			for user in warehouse_managers:
 				self.create_notification(
 					user=user,
-					subject=f"Spare parts requested for Repair: {self.name}"
+					subject=f"Spare parts requested for Repair: {self.name}",
+					channel="System Notification"
 				)
 	def get_users_by_role_and_service_center(self, role, service_center):
 		"""
 		Fetches list of users with a specific role at a specific service center
 		by querying the Service Center Assignment DocType.
 		"""
+		users_with_role = frappe.get_all(
+			"Has Role",
+			filters={"role": role},
+			pluck="parent"
+    	)
 		# 1. Get Users assigned to this Service Center
 		assigned_users = frappe.get_all(
 			"Service Center Assignment",
-			filters={"service_center": service_center},
+			filters={"service_center": service_center,
+				 "user": ["in", users_with_role]},
 			pluck="user"
 		)
 
@@ -98,14 +151,13 @@ class RepairRequest(Document):
 			"User",
 			filters={
 				"name": ("in", assigned_users),
-				# Note: We must check 'Has Role' since 'role_profile_name' is not a standard column for filtering
-				"user_roles": {"role": role}
+				"Enabled": 1,
 			},
 			pluck="name"
 		)
 
 	@frappe.whitelist()
-	def test(docname):
+	def test():
 		frappe.msgprint("Test function called successfully.")
 
 
@@ -233,10 +285,11 @@ def request_parts_from_warehouse(docname):
 	Set status to 'Pending Parts Allocation' and notify warehouse.
 	Called from 'Request Parts' button.
 	"""
+	frappe.msgprint(_("Requesting parts..."), alert=True)
 	doc = frappe.get_doc("Repair Request", docname)
 	if doc.status != "In Progress":
 		frappe.throw("Can only request parts when repair is 'In Progress'.")
-
+	doc.restrict_edits()  # Ensure no edits are made before requesting parts
 	doc.status = "Pending Parts Allocation"
 	doc.save()
 	frappe.msgprint(_("Parts requested successfully. Warehouse manager has been notified."), alert=True)
@@ -259,7 +312,8 @@ def mark_pending_from_main(docname):
 	# Notify technician
 	doc.create_notification(
 		user=doc.assigned_technician,
-		subject=f"Repair {doc.name} is 'Pending for Spare Parts' from main."
+		subject=f"Repair {doc.name} is 'Pending for Spare Parts' from main.",
+		channel="System Notification"
 	)
 
 	# Suggest creating a Material Request
@@ -333,7 +387,8 @@ def create_stock_transfer(docname):
 	# Notify technician
 	doc.create_notification(
 		user=doc.assigned_technician,
-		subject=f"Parts for Repair {doc.name} have been allocated."
+		subject=f"Parts for Repair {doc.name} have been allocated.",
+		channel="System Notification"
 	)
 
 	# Open the new Stock Entry for the user to submit

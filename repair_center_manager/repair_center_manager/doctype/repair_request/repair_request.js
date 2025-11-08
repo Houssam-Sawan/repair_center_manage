@@ -3,8 +3,9 @@
 
 frappe.ui.form.on("Repair Request", {
 
-    items_add: calculate_total,
-    items_remove: calculate_total,
+    required_parts_delete: function(frm){
+        calculate_total(frm);
+    },
 
 	    /**
      * Onload: Set filters
@@ -14,9 +15,12 @@ frappe.ui.form.on("Repair Request", {
 
     },
  	refresh: function(frm) {
+        
+        frm.add_custom_button(__('Test Button'), function() {
+            test_button();
+        }).addClass('btn-secondary');
 
         frm.set_intro("");
-        let state = frm.doc.status;
 
                 // Filter for assigned_technician
         // Only show users who are 'Technician' role AND are linked to the selected Service Center 
@@ -34,11 +38,15 @@ frappe.ui.form.on("Repair Request", {
             };
         });
 
-        if (state !== "Not Saved") {
+/*         if (frm.doc.status !== "Not Saved") {
             frm.disable_save();
         }
+ */
+            // =================================================================
+            // == STATUS: Open (Receptionist Action: ASSIGN & START) ==
+            // =================================================================
         // Add "Assign & Start Repair" button only if docstatus is 0 (Draft)
-        if(state === "Open" && (frappe.user.has_role("Receptionist") || frappe.user.has_role("SC Manager"))) {
+        if(frm.doc.status === "Open" && (frappe.user.has_role("Receptionist") || frappe.user.has_role("SC Manager"))) {
             
             frm.add_custom_button("Assign & Start Repair", () => {
                 frappe.call({
@@ -51,6 +59,54 @@ frappe.ui.form.on("Repair Request", {
             }).addClass("btn-primary");
         }        
 
+            // =================================================================
+            // == STATUS: In Progress (Technician Action: REQUEST PARTS/COMPLETE) ==
+            // =================================================================
+            if (frm.doc.status === 'In Progress' && (frappe.user.has_role('Technician') || frappe.user.has_role("SC Manager"))) {
+                //frappe.msgprint(__('You are logged in as: {0}', [frappe.session.user]));
+               /*  frm.add_custom_button(__('Test Button'), function() {
+                    if (frappe.user.has_role('Technician') ){
+                        frappe.msgprint(__('You are a Technician {0}', [frm.doc.status]));
+                        frappe.msgprint(__('Assigned Technician: {0} nad condition is {1}', [frm.doc.assigned_technician,frm.doc.assigned_technician === frappe.session.user]));
+                    }
+                }).addClass('btn-secondary'); */
+
+                if (frm.doc.assigned_technician === frappe.session.user) {
+                    // Button to request parts
+                    frm.add_custom_button(__('Request Parts'), function() {
+                        if (!frm.doc.required_parts || frm.doc.required_parts.length === 0) {
+                            frappe.msgprint(__("Please add items to the 'Required Parts' table first."));
+                            return;
+                        }
+                        if (!frm.doc.fault_category && !frm.doc.fault_description) {
+                            frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
+                            return;
+                        }
+                        frappe.call({
+                            method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.request_parts_from_warehouse",
+                            args: { 
+                                docname: frm.doc.name 
+                            },
+                            callback: function(r) {
+                                if (!r.exc) {
+                                    frappe.msgprint(__('Material Request {0} created successfully', [r.message]));
+                                    frm.reload_doc();
+                                }
+                            }
+                        });
+                    }).addClass('btn-primary');
+                    
+                    // Button to complete without parts
+                    frm.add_custom_button(__('Complete Repair'), function() {
+                        if (!frm.doc.fault_category && !frm.doc.fault_description) {
+                            frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
+                            return;
+                        }
+                        frm.set_value('status', 'Repaired');
+                        frm.save();
+                    }).addClass('btn-success');
+                }
+            }                    
 
 
 	},
@@ -150,10 +206,14 @@ frappe.ui.form.on('Repair Request Material', {
      */
     required_parts_refresh: function(frm) {
         // This is a placeholder for any logic on table refresh
+        calculate_total(frm);
     },
 
     required_qty: calculate_total,
     price: calculate_total,
+    required_parts_remove: function(frm, cdt, cdn) {
+        calculate_total(frm);
+    }
     
     
 });
@@ -161,9 +221,7 @@ frappe.ui.form.on('Repair Request Material', {
 
 
 function test_button() {
-    frappe.call({
-        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.test",
-    });
+    frm.call('test');
 }
 
 function calculate_total(frm, cdt, cdn) {
@@ -176,4 +234,5 @@ function calculate_total(frm, cdt, cdn) {
 
     // Set total field value in parent doc
     frm.set_value('total', total);
+    refresh_field('total');
 }
