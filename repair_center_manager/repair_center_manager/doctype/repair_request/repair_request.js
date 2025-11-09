@@ -133,7 +133,35 @@ frappe.ui.form.on("Repair Request", {
                         // =================================================================
             // == STATUS:  Pending for Spare Parts (Warehouse Action) ==
             // =================================================================
-
+            if (frm.doc.status === 'Pending for Spare Parts' && (frappe.user.has_role('Service Center Warehouse Manager') || frappe.user.has_role("SC Manager")) ) {
+                // Button to mark as pending from main warehouse
+                frm.add_custom_button(__('Spare Parts Received'), function() {
+                    frappe.call({
+                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.mark_spart_parts_received",
+                        args: { 
+                            docname: frm.doc.name 
+                        },
+                        callback: () => frm.reload_doc()
+                    });
+                }).addClass('btn-warning');
+            }
+            
+            // =================================================================
+            // == STATUS: Parts Allocated (Technician Action: COMPLETE) ==
+            // =================================================================
+            if (frm.doc.status === 'Parts Allocated' && frappe.user.has_role('Technician')) {
+                 if (frm.doc.assigned_technician === frappe.session.user) {
+                     frm.add_custom_button(__('Complete Repair'), function() {
+                        frappe.call({
+                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.complete_repair",
+                        args: { 
+                            docname: frm.doc.name 
+                        },
+                        callback: () => frm.reload_doc()
+                    });
+                    }).addClass('btn-success');
+                 }
+            }
 
 	},
 

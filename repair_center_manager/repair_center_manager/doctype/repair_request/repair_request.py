@@ -206,7 +206,7 @@ def assign_technician_and_start(docname,assigned_technician=None):
 
 
 @frappe.whitelist()
-def get_item_availability(item_code, service_center):
+def get_item_availability(item_code, service_center, warehouse_type="Store Warehouse"):
 	"""
 	Checks the available quantity of an item in the service center's main store.
 	"""
@@ -214,9 +214,9 @@ def get_item_availability(item_code, service_center):
 		return 0
 
 	# Get the warehouse associated with the service center
-	warehouse = frappe.db.get_value("Service Center", service_center, "store_warehouse")
+	warehouse = frappe.db.get_value("Service Center", service_center, warehouse_type)
 	if not warehouse:
-		frappe.throw(f"No 'Store Warehouse' configured for Service Center: {service_center}")
+		frappe.throw(f"No {warehouse_type} configured for Service Center: {service_center}")
 		return 0
 
 	try:
@@ -318,6 +318,23 @@ def mark_pending_from_main(docname):
 	frappe.msgprint(_("Status set to 'Pending for Spare Parts'. Please create a Material Request to the Main Warehouse."), alert=True)
 
 @frappe.whitelist()
+def mark_spart_parts_received(docname):
+	"""
+	Set status to 'In Progress' and notify technician.
+	Called from 'Mark Parts Received' button.
+	"""
+	doc = frappe.get_doc("Repair Request", docname)
+	if doc.status != "Pending for Spare Parts":
+		frappe.throw("Can only mark parts received when status is 'Pending for Spare Parts'.")
+
+	doc.status = "Pending Parts Allocation"
+	doc.add_log_entry("Parts received and status set back to 'Pending Parts Allocation'.")
+	doc.save()
+
+
+	frappe.msgprint(_("Status set back to 'Pending Parts Allocation'."), alert=True)
+
+@frappe.whitelist()
 def test(docname):
 	frappe.msgprint("Test function called successfully.")
 
@@ -374,7 +391,7 @@ def create_stock_transfer(docname):
 			qty_to_issue = item.required_qty - item.issued_qty
 
 			# Check availability
-			available_qty = get_item_availability(item.item_code, doc.service_center)
+			available_qty = get_item_availability(item.item_code, doc.service_center, "Store Warehouse")
 			if qty_to_issue > available_qty:
 				frappe.throw(f"Not enough stock for {item.item_code}. Required: {qty_to_issue}, Available: {available_qty}")
 
@@ -413,5 +430,70 @@ def create_stock_transfer(docname):
 
 	# Open the new Stock Entry for the user to submit
 	frappe.response["open_doc"] = get_link_to_form("Stock Entry", se.name)
+
+@frappe.whitelist()
+def complete_repair(docname):
+	"""
+	Creates and returns a new Stock Entry (Material Issue)
+	for the warehouse manager to fulfill.
+	"""
+	doc = frappe.get_doc("Repair Request", docname)
+
+	if doc.status != "Parts Allocated":
+		frappe.throw("Can only allocate parts when status is 'Parts Allocated'.")
+
+	sc_details = frappe.get_doc("Service Center", doc.service_center)
+	if not sc_details.store_warehouse or not sc_details.wip_warehouse:
+		frappe.throw("Service Center is missing Store or WIP Warehouse configuration.")
+
+	doc.restrict_edits()  # Ensure no edits are made before creating stock transfer
+	existing = frappe.db.exists("Stock Entry", {"stock_entry_type":"Material Issue","custom_repair_request": doc.name})
+	if existing:
+		
+		link = get_link_to_form("Stock Entry", existing)
+		frappe.msgprint(f"Material issue already exists: {link}")
+		# Update status on Repair Request
+		doc.status = "Repaired"
+		doc.add_log_entry(f"Stock Entry {link} created for parts transfer.")
+		doc.save()
+
+	# Create the Stock Entry
+	se = frappe.new_doc("Stock Entry")
+	se.stock_entry_type = "Material Issue"
+	se.set("purpose", "Material Issue") # ERPNext 14+
+	se.from_warehouse = sc_details.wip_warehouse
+	se.custom_repair_request = doc.name # Link it back
+
+	# Add items
+	total_issued = 0
+	for item in doc.required_parts:
+		qty_to_issue = item.issued_qty
+
+		# Check availability
+		available_qty = get_item_availability(item.item_code, doc.service_center,"WIP Warehouse")
+		if qty_to_issue > available_qty:
+			frappe.throw(f"Not enough stock for {item.item_code}. Required: {qty_to_issue}, Available: {available_qty}")
+
+		se.append("items", {
+			"item_code": item.item_code,
+			"qty": qty_to_issue,
+			"s_warehouse": sc_details.wip_warehouse,
+			#"t_warehouse": sc_details.wip_warehouse,
+			"inventory_type": "Stock", # ERPNext 15+
+			"reference_doctype": "Repair Request", # Link line item
+			"reference_docname": doc.name # Link line item
+		})
+		total_issued += 1
+
+	if total_issued == 0:
+		frappe.throw("No parts to issue or all parts have already been issued.")
+	# Save and return to client
+	se.insert()
+	se.submit()
+	# Update status on Repair Request
+	doc.status = "Repaired"
+	doc.add_log_entry(f"Stock Entry {se.name} created for parts Consumption.")
+
+	doc.save()
 
 
