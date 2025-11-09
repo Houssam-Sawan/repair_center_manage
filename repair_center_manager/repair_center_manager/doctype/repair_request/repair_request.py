@@ -23,7 +23,12 @@ class RepairRequest(Document):
 		
 		if "Service Center Warehouse Manager" in frappe.get_roles(frappe.session.user) :
 			self.restrict_edits()
-		if self.status in ["Pending Parts Allocation", "Parts Allocated"]:
+		if self.status in ["In Progress","Pending Parts Allocation", "Pending for Spare Parts", "Parts Allocated"] and "Receptionist" in frappe.get_roles(frappe.session.user) :
+			self.restrict_edits_receptionist()
+		if self.status in ["Pending Parts Allocation", "Pending for Spare Parts", "Parts Allocated"] and "Technician" in frappe.get_roles(frappe.session.user) :
+			self.restrict_edits()		
+		if self.status in ["Pending Parts Allocation", "Parts Allocated","Repaired", "Delivered", "Pending for Spare Parts"]:
+			self.restrict_edits()
 			# Ensure at least one part is requested
 			if not self.required_parts or len(self.required_parts) == 0:
 				frappe.throw(_("Please add at least one required part before setting status to 'Pending Parts Allocation'."))
@@ -49,7 +54,35 @@ class RepairRequest(Document):
 
 	def restrict_edits(self):
 		"""Prevent field edits after certain workflow states or by specific roles."""
-		if self.status in ["Pending Parts Allocation", "Parts Allocated"," Repaired", "Delivered", "Pending for Spare Parts"]:
+		if self.status in ["Pending Parts Allocation", "Parts Allocated", "Repaired", "Delivered", "Pending for Spare Parts"]:
+            # Bypass for managers or admins
+			if "SC Manager" not in frappe.get_roles(frappe.session.user) and not frappe.session.user == "Administrator":
+                # Compare current values with database values
+				if not self.is_new():
+					old_doc = frappe.get_doc(self.doctype, self.name)
+					changed_fields = []
+                    
+					for field in self.meta.fields:
+						# Skip automatically updated system fields
+						# if field.fieldname in ("modified", "modified_by", "owner"):
+						# continue
+						if field.read_only or field.hidden:
+							continue
+
+						old_value = old_doc.get(field.fieldname)
+						new_value = self.get(field.fieldname)
+						
+						if old_value != new_value:
+							changed_fields.append(field.label or field.fieldname)
+					if changed_fields:
+						frappe.throw(
+                            f"You cannot modify this document in state <b>{self.status}</b>. "
+                            f"Changed fields: {', '.join(changed_fields)}"
+                        )
+
+	def restrict_edits_receptionist(self):
+		"""Prevent field edits after certain workflow states or by specific roles."""
+		if self.status in ["In Progress", "Pending Parts Allocation", "Parts Allocated","Repaired", "Delivered", "Pending for Spare Parts"]:
             # Bypass for managers or admins
 			if "SC Manager" not in frappe.get_roles(frappe.session.user) and not frappe.session.user == "Administrator":
                 # Compare current values with database values
@@ -206,7 +239,7 @@ def assign_technician_and_start(docname,assigned_technician=None):
 
 
 @frappe.whitelist()
-def get_item_availability(item_code, service_center, warehouse_type="Store Warehouse"):
+def get_item_availability(item_code, service_center, warehouse_type="store_warehouse"):
 	"""
 	Checks the available quantity of an item in the service center's main store.
 	"""
@@ -391,7 +424,7 @@ def create_stock_transfer(docname):
 			qty_to_issue = item.required_qty - item.issued_qty
 
 			# Check availability
-			available_qty = get_item_availability(item.item_code, doc.service_center, "Store Warehouse")
+			available_qty = get_item_availability(item.item_code, doc.service_center, "store_warehouse")
 			if qty_to_issue > available_qty:
 				frappe.throw(f"Not enough stock for {item.item_code}. Required: {qty_to_issue}, Available: {available_qty}")
 
@@ -470,7 +503,7 @@ def complete_repair(docname):
 		qty_to_issue = item.issued_qty
 
 		# Check availability
-		available_qty = get_item_availability(item.item_code, doc.service_center,"WIP Warehouse")
+		available_qty = get_item_availability(item.item_code, doc.service_center,"wip_warehouse")
 		if qty_to_issue > available_qty:
 			frappe.throw(f"Not enough stock for {item.item_code}. Required: {qty_to_issue}, Available: {available_qty}")
 
@@ -488,12 +521,29 @@ def complete_repair(docname):
 	if total_issued == 0:
 		frappe.throw("No parts to issue or all parts have already been issued.")
 	# Save and return to client
-	se.insert()
+	se.insert(ignore_permissions=True)
 	se.submit()
 	# Update status on Repair Request
 	doc.status = "Repaired"
 	doc.add_log_entry(f"Stock Entry {se.name} created for parts Consumption.")
 
 	doc.save()
+
+@frappe.whitelist()
+def deliver_to_customer(docname):
+	"""
+	Set status to 'Delivered' when the device is handed over to the customer.
+	Called from 'Deliver to Customer' button.
+	"""
+	doc = frappe.get_doc("Repair Request", docname)
+	if doc.status != "Repaired":
+		frappe.throw("Can only deliver when repair status is 'Repaired'.")
+
+	doc.status = "Delivered"
+	doc.add_log_entry("Device delivered to customer.")
+	doc.save(ignore_permissions=True)
+	doc.submit()
+
+	frappe.msgprint(_("Device marked as 'Delivered'."), alert=True)
 
 

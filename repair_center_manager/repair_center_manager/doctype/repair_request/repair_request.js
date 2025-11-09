@@ -16,10 +16,10 @@ frappe.ui.form.on("Repair Request", {
     },
  	refresh: function(frm) {
         
-        frm.add_custom_button(__('Test Button'), function() {
+/*         frm.add_custom_button(__('Test Button'), function() {
             test_button();
         }).addClass('btn-secondary');
-
+ */
         frm.set_intro("");
 
                 // Filter for assigned_technician
@@ -46,7 +46,7 @@ frappe.ui.form.on("Repair Request", {
             // == STATUS: Open (Receptionist Action: ASSIGN & START) ==
             // =================================================================
         // Add "Assign & Start Repair" button only if docstatus is 0 (Draft)
-        if(frm.doc.status === "Open" && (frappe.user.has_role("Receptionist") || frappe.user.has_role("SC Manager"))) {
+        if(frm.doc.status === "Open" && (frappe.user.has_role("Receptionist") || frappe.user.has_role('SC Manager'))) {
             
             frm.add_custom_button("Assign & Start Repair", () => {
                 frappe.call({
@@ -62,7 +62,7 @@ frappe.ui.form.on("Repair Request", {
             // =================================================================
             // == STATUS: In Progress (Technician Action: REQUEST PARTS/COMPLETE) ==
             // =================================================================
-            if (frm.doc.status === 'In Progress' && (frappe.user.has_role('Technician') || frappe.user.has_role("SC Manager"))) {
+            if (frm.doc.status === 'In Progress' && (frappe.user.has_role('Technician') || frappe.user.has_role('SC Manager'))) {
                 //frappe.msgprint(__('You are logged in as: {0}', [frappe.session.user]));
                /*  frm.add_custom_button(__('Test Button'), function() {
                     if (frappe.user.has_role('Technician') ){
@@ -71,7 +71,7 @@ frappe.ui.form.on("Repair Request", {
                     }
                 }).addClass('btn-secondary'); */
 
-                if (frm.doc.assigned_technician === frappe.session.user) {
+                if (frm.doc.assigned_technician === frappe.session.user || frappe.user.has_role('SC Manager')) {
                     // Button to request parts
                     frm.add_custom_button(__('Request Parts'), function() {
                         if (!frm.doc.required_parts || frm.doc.required_parts.length === 0) {
@@ -106,7 +106,7 @@ frappe.ui.form.on("Repair Request", {
             // =================================================================
             // == STATUS: Pending Parts Allocation (Warehouse Action) ==
             // =================================================================
-            if (frm.doc.status === 'Pending Parts Allocation' && (frappe.user.has_role('Service Center Warehouse Manager') || frappe.user.has_role("SC Manager")) ) {
+            if (frm.doc.status === 'Pending Parts Allocation' && (frappe.user.has_role('Service Center Warehouse Manager') || frappe.user.has_role('SC Manager')) ) {
                 // Button to create Stock Entry (Material Transfer)
                 frm.add_custom_button(__('Allocate Parts'), function() {
                     frappe.call({
@@ -133,7 +133,7 @@ frappe.ui.form.on("Repair Request", {
                         // =================================================================
             // == STATUS:  Pending for Spare Parts (Warehouse Action) ==
             // =================================================================
-            if (frm.doc.status === 'Pending for Spare Parts' && (frappe.user.has_role('Service Center Warehouse Manager') || frappe.user.has_role("SC Manager")) ) {
+            if (frm.doc.status === 'Pending for Spare Parts' && (frappe.user.has_role('Service Center Warehouse Manager') || frappe.user.has_role('SC Manager')) ) {
                 // Button to mark as pending from main warehouse
                 frm.add_custom_button(__('Spare Parts Received'), function() {
                     frappe.call({
@@ -149,8 +149,8 @@ frappe.ui.form.on("Repair Request", {
             // =================================================================
             // == STATUS: Parts Allocated (Technician Action: COMPLETE) ==
             // =================================================================
-            if (frm.doc.status === 'Parts Allocated' && frappe.user.has_role('Technician')) {
-                 if (frm.doc.assigned_technician === frappe.session.user) {
+            if (frm.doc.status === 'Parts Allocated' && (frappe.user.has_role('Technician') || frappe.user.has_role('SC Manager')) ) {
+                 if (frm.doc.assigned_technician === frappe.session.user || frappe.user.has_role('SC Manager')) {
                      frm.add_custom_button(__('Complete Repair'), function() {
                         frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.complete_repair",
@@ -161,6 +161,20 @@ frappe.ui.form.on("Repair Request", {
                     });
                     }).addClass('btn-success');
                  }
+            }
+                        // =================================================================
+            // == STATUS: Repaired (Receptionist Action: DELIVER) ==
+            // =================================================================
+            if (frm.doc.status === 'Repaired' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
+                 frm.add_custom_button(__('Deliver to Customer'), function() {
+                    frappe.call({
+                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.deliver_to_customer",
+                        args: { 
+                            docname: frm.doc.name 
+                        },
+                        callback: () => frm.reload_doc()
+                    });
+                }).addClass('btn-primary');
             }
 
 	},

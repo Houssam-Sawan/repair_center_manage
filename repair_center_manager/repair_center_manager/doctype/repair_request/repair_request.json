@@ -9,6 +9,7 @@
  "engine": "InnoDB",
  "field_order": [
   "service_center",
+  "repair_type",
   "column_break_puhp",
   "status",
   "assigned_technician",
@@ -47,7 +48,10 @@
   "internal_log_section",
   "repair_log",
   "notes_tab",
-  "additional_notes"
+  "additional_notes",
+  "terms_tab",
+  "tc_name",
+  "terms"
  ],
  "fields": [
   {
@@ -312,13 +316,40 @@
    "label": "Fault Details",
    "link_filters": "[[\"Fault Category\",\"is_group\",\"=\",0],[\"Fault Category\",\"parent_fault_category\",\"=\",\"eval:doc.fault_category\"]]",
    "options": "Fault Category"
+  },
+  {
+   "fieldname": "repair_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Repair Type",
+   "options": "Out Of Warranty\nIn Warranty\nSwap\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "terms_tab",
+   "fieldtype": "Tab Break",
+   "label": "Terms"
+  },
+  {
+   "fieldname": "tc_name",
+   "fieldtype": "Link",
+   "label": "Terms",
+   "options": "Terms and Conditions",
+   "print_hide": 1,
+   "report_hide": 1
+  },
+  {
+   "fetch_from": "tc_name.terms",
+   "fieldname": "terms",
+   "fieldtype": "Text Editor",
+   "label": "Terms and Conditions Content"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-08 11:27:39.539517",
+ "modified": "2025-11-09 16:09:35.008173",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
@@ -345,6 +376,5 @@
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_seen": 1
 }
