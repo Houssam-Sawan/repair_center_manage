@@ -1,0 +1,107 @@
+{
+ "actions": [
+  {
+   "allowed_roles": [
+    "Receptionist"
+   ],
+   "label": "Assign & Start",
+   "next_state": "In Progress",
+   "action_fields": [
+    {
+     "fieldname": "assigned_technician",
+     "mandatory": 1
+    }
+   ],
+   "custom_action": "assign_technician_and_start"
+  },
+  {
+   "allowed_roles": [
+    "Technician"
+   ],
+   "label": "Request Parts",
+   "next_state": "Pending Parts Allocation",
+   "custom_action": "request_parts_from_warehouse"
+  },
+  {
+   "allowed_roles": [
+    "Service Center Warehouse Manager"
+   ],
+   "label": "Allocate & Transfer",
+   "next_state": "Parts Allocated",
+   "custom_action": "create_stock_transfer"
+  },
+  {
+   "allowed_roles": [
+    "Service Center Warehouse Manager"
+   ],
+   "label": "Mark Pending (Main)",
+   "next_state": "Pending for Spare Parts",
+   "custom_action": "mark_pending_from_main"
+  },
+  {
+   "allowed_roles": [
+    "Technician"
+   ],
+   "label": "Complete Repair",
+   "next_state": "Repaired"
+  },
+  {
+   "allowed_roles": [
+    "Technician"
+   ],
+   "label": "Finalize Repair",
+   "next_state": "Repaired"
+  },
+  {
+   "allowed_roles": [
+    "Receptionist"
+   ],
+   "label": "Deliver to Customer",
+   "next_state": "Delivered"
+  }
+ ],
+ "creation": "2023-11-03 16:40:00.000000",
+ "doc_type": "Repair Request",
+ "enabled": 1,
+ "is_active": 1,
+ "modified": "2023-11-03 16:40:00.000000",
+ "name": "Repair Request Workflow",
+ "states": [
+  {
+   "state": "Open",
+   "allow_edit": "Receptionist,Technician",
+   "doc_status": 0
+  },
+  {
+   "state": "In Progress",
+   "allow_edit": "Technician",
+   "doc_status": 0
+  },
+  {
+   "state": "Pending Parts Allocation",
+   "allow_edit": "Service Center Warehouse Manager",
+   "doc_status": 0
+  },
+  {
+   "state": "Pending for Spare Parts",
+   "allow_edit": "Technician",
+   "doc_status": 0
+  },
+  {
+   "state": "Parts Allocated",
+   "allow_edit": "Technician",
+   "doc_status": 0
+  },
+  {
+   "state": "Repaired",
+   "allow_edit": "Receptionist",
+   "doc_status": 0
+  },
+  {
+   "state": "Delivered",
+   "allow_edit": "",
+   "doc_status": 1
+  }
+ ],
+ "is_default": 1
+}

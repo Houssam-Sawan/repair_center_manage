@@ -2,41 +2,56 @@
  "actions": [],
  "allow_events_in_timeline": 1,
  "allow_import": 1,
- "autoname": "format:format:RR-{YYYY}-{MM}-{DD}-{#####}",
+ "autoname": "format:RR-{service_center_abbr}-{YYYY}-{MM}-{DD}-{#####}",
  "creation": "2025-10-29 14:08:04.892755",
  "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "service_center",
+  "repair_type",
+  "column_break_puhp",
+  "status",
+  "assigned_technician",
   "section_break_mriu",
   "column_break_lvju",
   "title",
+  "service_center_abbr",
   "customer",
   "customer_name",
+  "customer_mobile_number",
   "column_break_qbta",
   "date",
   "posting_time",
   "set_posting_time",
   "column_break_xdtq",
   "amended_from",
-  "workflow_state",
   "consumed_stock_entry",
   "labor_time",
   "device_details_section",
   "brand",
   "device_model",
   "column_break_acpg",
-  "snimei",
+  "serial_no",
   "imei_2",
-  "fault_details_section",
+  "section_break_fhpy",
   "reported_issue",
   "condition_photo",
   "tab_2_tab",
+  "fault_details_section",
+  "fault_category",
+  "column_break_rfvu",
+  "fault_description",
   "technical_section",
-  "assigned_technician",
-  "used_parts",
+  "required_parts",
+  "total",
+  "internal_log_section",
+  "repair_log",
   "notes_tab",
-  "additional_notes"
+  "additional_notes",
+  "terms_tab",
+  "tc_name",
+  "terms"
  ],
  "fields": [
   {
@@ -100,6 +115,7 @@
    "fieldtype": "Date",
    "label": "Date",
    "no_copy": 1,
+   "read_only": 1,
    "reqd": 1,
    "search_index": 1
   },
@@ -109,6 +125,8 @@
    "fieldtype": "Datetime",
    "label": "Posting Time",
    "no_copy": 1,
+   "read_only": 1,
+   "read_only_depends_on": "eval:!doc.set_posting_time",
    "reqd": 1
   },
   {
@@ -117,7 +135,7 @@
    "fieldname": "set_posting_time",
    "fieldtype": "Check",
    "label": "Edit Posting Date and Time",
-   "permlevel": 1,
+   "permlevel": 2,
    "print_hide": 1
   },
   {
@@ -127,13 +145,6 @@
    "ignore_user_permissions": 1,
    "label": "Consumed Stock Entry",
    "options": "Stock Entry",
-   "read_only": 1
-  },
-  {
-   "bold": 1,
-   "fieldname": "workflow_state",
-   "fieldtype": "Data",
-   "label": "Workflow state",
    "read_only": 1
   },
   {
@@ -157,17 +168,12 @@
    "fieldname": "device_model",
    "fieldtype": "Link",
    "label": "Model",
+   "link_filters": "[[\"Device Model\",\"device_brand\",\"=\",\"eval:doc.brand\"]]",
    "options": "Device Model"
   },
   {
    "fieldname": "column_break_acpg",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "snimei",
-   "fieldtype": "Data",
-   "label": "SN/IMEI",
-   "reqd": 1
   },
   {
    "fieldname": "imei_2",
@@ -190,6 +196,7 @@
    "label": "Condition Photo"
   },
   {
+   "depends_on": "eval:frappe.user.has_role(\"Technician\") || frappe.user.has_role(\"Service Center Warehouse Manager\")",
    "fieldname": "tab_2_tab",
    "fieldtype": "Tab Break",
    "label": "Technical"
@@ -205,12 +212,6 @@
    "options": "User"
   },
   {
-   "fieldname": "used_parts",
-   "fieldtype": "Table",
-   "label": "Used Parts",
-   "options": "Repair Request Material"
-  },
-  {
    "fieldname": "notes_tab",
    "fieldtype": "Tab Break",
    "label": "Notes"
@@ -219,13 +220,136 @@
    "fieldname": "additional_notes",
    "fieldtype": "Small Text",
    "label": "Additional Notes"
+  },
+  {
+   "fieldname": "service_center",
+   "fieldtype": "Link",
+   "label": "Service Center",
+   "options": "Service Center",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fetch_from": "service_center.service_center_abbr",
+   "fieldname": "service_center_abbr",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Service Center Abbreviation",
+   "show_on_timeline": 1
+  },
+  {
+   "fieldname": "column_break_puhp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "serial_no",
+   "fieldtype": "Data",
+   "label": "SN/IMEI",
+   "reqd": 1
+  },
+  {
+   "fieldname": "required_parts",
+   "fieldtype": "Table",
+   "label": "Spare Parts",
+   "options": "Repair Request Material",
+   "read_only": 1,
+   "read_only_depends_on": "eval:!frappe.user.has_role(\"Technician\")"
+  },
+  {
+   "fieldname": "internal_log_section",
+   "fieldtype": "Section Break",
+   "label": "Internal Log"
+  },
+  {
+   "fieldname": "repair_log",
+   "fieldtype": "Table",
+   "label": "Repair Log",
+   "options": "Repair Log",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fault_category",
+   "fieldtype": "Link",
+   "label": "Fault Category",
+   "link_filters": "[[\"Fault Category\",\"is_group\",\"=\",1]]",
+   "options": "Fault Category"
+  },
+  {
+   "fieldname": "section_break_fhpy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_rfvu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "default": "Not Saved",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Not Saved\nOpen\nIn Progress\nPending Parts Allocation\nPending for Spare Parts\nParts Allocated\nRepaired\nDelivered\nCancelled",
+   "print_hide": 1,
+   "read_only": 1,
+   "show_on_timeline": 1
+  },
+  {
+   "fetch_from": "customer.mobile_no",
+   "fieldname": "customer_mobile_number",
+   "fieldtype": "Data",
+   "label": "Mobile Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fault_description",
+   "fieldtype": "Link",
+   "label": "Fault Details",
+   "link_filters": "[[\"Fault Category\",\"is_group\",\"=\",0],[\"Fault Category\",\"parent_fault_category\",\"=\",\"eval:doc.fault_category\"]]",
+   "options": "Fault Category"
+  },
+  {
+   "fieldname": "repair_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Repair Type",
+   "options": "Out Of Warranty\nIn Warranty\nSwap\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "terms_tab",
+   "fieldtype": "Tab Break",
+   "label": "Terms"
+  },
+  {
+   "fieldname": "tc_name",
+   "fieldtype": "Link",
+   "label": "Terms",
+   "options": "Terms and Conditions",
+   "print_hide": 1,
+   "report_hide": 1
+  },
+  {
+   "fetch_from": "tc_name.terms",
+   "fieldname": "terms",
+   "fieldtype": "Text Editor",
+   "label": "Terms and Conditions Content"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-29 16:44:29.078763",
+ "modified": "2025-11-10 16:22:51.007792",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
@@ -252,6 +376,5 @@
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_seen": 1
 }
