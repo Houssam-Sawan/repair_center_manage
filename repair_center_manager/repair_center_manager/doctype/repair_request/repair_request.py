@@ -442,8 +442,8 @@ def create_stock_transfer(docname):
 	if total_issued == 0:
 		frappe.throw("No parts to issue or all parts have already been issued.")
 	# Save and return to client
-	se.insert()
-	frappe.db.commit()
+	se.insert(ignore_permissions=True)
+	se.submit()
 	# Update status on Repair Request
 	doc.status = "Parts Allocated"
 	doc.add_log_entry(f"Stock Entry {se.name} created for parts transfer.")
