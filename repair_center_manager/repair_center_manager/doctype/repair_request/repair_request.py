@@ -13,10 +13,101 @@ from frappe.desk.doctype.notification_log.notification_log import (
 
 
 class RepairRequest(Document):
-		
-	
+	# who can edit what in each workflow status
+	EDIT_RULES = {
+		"Technician": {
+			"In Progress": ["required_parts", "fault_category", "fault_description", "repair_notes"],
+			"Parts Allocated": [],
+			"Pending Parts Allocation": [],
+		},
+		"Receptionist": {
+			"Pending Parts Allocation": ["approval_comment"],
+		},
+		"Service Center Warehouse Managerr": {
+			"Pending Parts Allocation": ["approval_comment"],
+			"Parts Allocated": ["custom_notes"],
+		},
+		"SC Manager": {
+			"Pending Parts Allocation": ["approval_comment"],
+			"Parts Allocated": ["custom_notes"],
+		},
+		"Administrator": "__all__",  # can edit anything
+	}
+
+	def restrict_edits_role(self):
+		"""Restrict edits based on workflow status and role-based field permissions."""
+        # Skip check for new documents
+		if self.is_new():
+			return
+
+        # Get user roles and workflow status
+		user_roles = frappe.get_roles(frappe.session.user)
+		status = self.status
+
+        # Superuser bypass
+		if frappe.session.user == "Administrator":
+			return
+
+        # Get old document for comparison
+		old_doc = frappe.get_doc(self.doctype, self.name)
+		changed_fields = []
+
+        # Determine editable fields for this role and status
+		editable_fields = []
+		for role in user_roles:
+			rules = EDIT_RULES.get(role)
+			if not rules:
+				continue
+			if rules == "__all__":
+				return  # full access
+			if status in rules:
+				editable_fields.extend(rules[status])
+
+        # If no rule matches → block all edits
+		if not editable_fields:
+			editable_fields = []
+
+		for field in self.meta.fields:
+            # Skip automatically updated or system fields
+			if field.fieldname in ("modified", "modified_by", "owner", "creation", "idx"):
+				continue
+
+            # Skip read-only or hidden fields (UI restrictions)
+			if field.read_only or field.hidden:
+				continue
+
+            # Handle normal fields
+			if field.fieldtype != "Table":
+				old_value = old_doc.get(field.fieldname)
+				new_value = self.get(field.fieldname)
+				if old_value != new_value and field.fieldname not in editable_fields:
+					changed_fields.append(field.label or field.fieldname)
+			else:
+                # Handle child tables
+				for d_new in self.get(field.fieldname) or []:
+					if not d_new.name:
+						continue  # skip new rows (if not allowed, you can block instead)
+					d_old = frappe.get_doc(d_new.doctype, d_new.name)
+					child_meta = frappe.get_meta(d_new.doctype)
+					for cfield in child_meta.fields:
+						if cfield.fieldname in ("modified", "owner", "idx"):
+							continue
+						old_value = d_old.get(cfield.fieldname)
+						new_value = d_new.get(cfield.fieldname)
+						if old_value != new_value and field.fieldname not in editable_fields:
+							changed_fields.append(f"{field.label} → {cfield.label}")
+
+        # If any restricted fields changed → throw error
+		if changed_fields:
+			frappe.throw(
+                f"You cannot modify this document in state <b>{status}</b>.<br>"
+                f"Changed fields: {', '.join(changed_fields)}",
+                title="Edit Restricted"
+            )
+			
+			
 	def validate(self):
-		self.test_validate()
+		self.Validate_sn()
 		self.log_status_change()
 		if self.is_new():
 			self.status = "Open"
@@ -47,10 +138,10 @@ class RepairRequest(Document):
 	def on_update(self):
 		self.handle_notifications()
 
-	def test_validate(self):
+	def Validate_sn(self):
 		# Example validation: Serial number should not be "12345"
-		if self.serial_no == "12345":
-			frappe.throw(_("Invalid SN/IMEI number."))
+		if len(self.serial_no) < 11 and self.serial_no != "NA":
+			frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters or 'NA'."))
 
 	def restrict_edits(self):
 		"""Prevent field edits after certain workflow states or by specific roles."""
