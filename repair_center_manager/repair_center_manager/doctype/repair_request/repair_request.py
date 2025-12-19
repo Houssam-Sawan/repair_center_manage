@@ -55,7 +55,7 @@ class RepairRequest(Document):
         # Determine editable fields for this role and status
 		editable_fields = []
 		for role in user_roles:
-			rules = EDIT_RULES.get(role)
+			rules = self.EDIT_RULES.get(role)
 			if not rules:
 				continue
 			if rules == "__all__":
@@ -105,7 +105,7 @@ class RepairRequest(Document):
                 title="Edit Restricted"
             )
 			
-			
+
 	def validate(self):
 		self.Validate_sn()
 		self.log_status_change()

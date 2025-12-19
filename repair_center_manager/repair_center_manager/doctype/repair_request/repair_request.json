@@ -24,6 +24,7 @@
   "date",
   "posting_time",
   "set_posting_time",
+  "suggested_price",
   "column_break_xdtq",
   "amended_from",
   "consumed_stock_entry",
@@ -34,6 +35,14 @@
   "column_break_acpg",
   "serial_no",
   "imei_2",
+  "accessories_section",
+  "cable",
+  "column_break_izqw",
+  "charger",
+  "column_break_smum",
+  "carton",
+  "column_break_ovvo",
+  "none",
   "section_break_fhpy",
   "reported_issue",
   "condition_photo",
@@ -42,9 +51,18 @@
   "fault_category",
   "column_break_rfvu",
   "fault_description",
+  "section_break_yonk",
+  "resolution",
   "technical_section",
   "required_parts",
+  "section_break_rjso",
   "total",
+  "column_break_swbu",
+  "labor_charge",
+  "section_break_nbqq",
+  "total_cost",
+  "column_break_xucw",
+  "profit",
   "internal_log_section",
   "repair_log",
   "notes_tab",
@@ -162,14 +180,16 @@
    "fieldname": "brand",
    "fieldtype": "Link",
    "label": "Brand",
-   "options": "Brand"
+   "options": "Brand",
+   "reqd": 1
   },
   {
    "fieldname": "device_model",
    "fieldtype": "Link",
    "label": "Model",
    "link_filters": "[[\"Device Model\",\"device_brand\",\"=\",\"eval:doc.brand\"]]",
-   "options": "Device Model"
+   "options": "Device Model",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_acpg",
@@ -251,9 +271,7 @@
    "fieldname": "required_parts",
    "fieldtype": "Table",
    "label": "Spare Parts",
-   "options": "Repair Request Material",
-   "read_only": 1,
-   "read_only_depends_on": "eval:!frappe.user.has_role(\"Technician\")"
+   "options": "Repair Request Material"
   },
   {
    "fieldname": "internal_log_section",
@@ -343,13 +361,104 @@
    "fieldname": "terms",
    "fieldtype": "Text Editor",
    "label": "Terms and Conditions Content"
+  },
+  {
+   "fieldname": "accessories_section",
+   "fieldtype": "Section Break",
+   "label": "Accessories"
+  },
+  {
+   "default": "0",
+   "fieldname": "cable",
+   "fieldtype": "Check",
+   "label": "Cable"
+  },
+  {
+   "fieldname": "column_break_izqw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "charger",
+   "fieldtype": "Check",
+   "label": "Charger"
+  },
+  {
+   "fieldname": "column_break_smum",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "carton",
+   "fieldtype": "Check",
+   "label": "Carton"
+  },
+  {
+   "fieldname": "column_break_ovvo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "none",
+   "fieldtype": "Check",
+   "label": "None"
+  },
+  {
+   "fieldname": "suggested_price",
+   "fieldtype": "Currency",
+   "label": "Suggested Price",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_yonk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "resolution",
+   "fieldtype": "Select",
+   "label": "Resolution",
+   "options": "Parts replacement\nClean\nSoftware"
+  },
+  {
+   "fieldname": "section_break_nbqq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_cost",
+   "fieldtype": "Currency",
+   "label": "Total Cost"
+  },
+  {
+   "fieldname": "column_break_xucw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "profit",
+   "fieldtype": "Currency",
+   "label": "Profit"
+  },
+  {
+   "fieldname": "section_break_rjso",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_swbu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.repair_type==\"In Warranty\"",
+   "fieldname": "labor_charge",
+   "fieldtype": "Currency",
+   "label": "Labor Charge",
+   "mandatory_depends_on": "eval:doc.repair_type==\"In Warranty\"&frappe.user.has_role(\"Technician\")"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-10 16:22:51.007792",
+ "modified": "2025-12-19 22:10:19.743616",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
