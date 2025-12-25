@@ -4,7 +4,7 @@
 frappe.ui.form.on("Repair Request", {
 
     required_parts_delete: function(frm){
-        calculate_total(frm);
+        calculate_totals(frm);
     },
 
 	    /**
@@ -254,6 +254,23 @@ frappe.ui.form.on('Repair Request Material', {
                 frappe.msgprint(__("Please set the Service Center first to check stock availability."));
             }
 
+            // Fetch stock cost price from the service center's store
+            if (frm.doc.service_center) {
+                 frappe.call({
+                    method: 'repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.get_item_cost_price',
+                    args: {
+                        item_code: row.item_code,
+                        service_center: frm.doc.service_center
+                    },
+                    callback: function(r) {
+                        if (r.message) {
+                            frappe.model.set_value(cdt, cdn, 'item_cost', r.message);
+                        }
+                    }
+                });
+            } else {
+                frappe.msgprint(__("Please set the Service Center first to check stock availability."));
+            }
             // Fetch latest selling price
         frappe.call({
             method: 'frappe.client.get_list',
@@ -272,7 +289,7 @@ frappe.ui.form.on('Repair Request Material', {
                 if (r.message && r.message.length) {
                     let price = r.message[0].price_list_rate;
                     frappe.model.set_value(cdt, cdn, 'price', price);
-                    calculate_total(frm, cdt, cdn);
+                    calculate_totals(frm, cdt, cdn);
                 } else {
                     frappe.model.set_value(cdt, cdn, 'price', 0);
                     frappe.msgprint(__('No selling price found for this item'));
@@ -287,13 +304,13 @@ frappe.ui.form.on('Repair Request Material', {
      */
     required_parts_refresh: function(frm) {
         // This is a placeholder for any logic on table refresh
-        calculate_total(frm);
+        calculate_totals(frm);
     },
 
-    required_qty: calculate_total,
-    price: calculate_total,
+    required_qty: calculate_totals,
+    price: calculate_totals,
     required_parts_remove: function(frm, cdt, cdn) {
-        calculate_total(frm);
+        calculate_totals(frm);
     }
     
     
@@ -305,15 +322,22 @@ function test_button() {
     frm.call('test');
 }
 
-function calculate_total(frm, cdt, cdn) {
+function calculate_totals(frm, cdt, cdn) {
     let total = 0;
+    let total_cost = 0;
+    let labor_charge = frm.doc.labor_charge || 0;
     (frm.doc.required_parts || []).forEach(row => {
         if (row.required_qty && row.price) {
             total += row.required_qty * row.price;
+        }
+        if (row.required_qty && row.item_cost) {
+            total_cost += row.required_qty * row.item_cost;
         }
     });
 
     // Set total field value in parent doc
     frm.set_value('total', total);
+    frm.set_value('total_cost', total_cost);
+    frm.set_value('profit', labor_charge + total - total_cost);
     refresh_field('total');
 }

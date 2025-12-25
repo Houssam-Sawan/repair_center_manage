@@ -357,6 +357,33 @@ def get_item_availability(item_code, service_center, warehouse_type="store_wareh
 		return 0
 
 @frappe.whitelist()
+def get_item_cost_price(item_code, service_center, warehouse_type="store_warehouse"):
+	"""
+	Checks the cost price (Valuation Rateof an item in the service center's main store.
+	"""
+	if not service_center:
+		return 0
+
+	# Get the warehouse associated with the service center
+	warehouse = frappe.db.get_value("Service Center", service_center, warehouse_type)
+	if not warehouse:
+		frappe.throw(f"No {warehouse_type} configured for Service Center: {service_center}")
+		return 0
+
+	try:
+		qty = frappe.db.sql(f"""
+			SELECT `valuation_rate`
+			FROM `tabBin`
+			WHERE `item_code` = %s AND `warehouse` = %s
+		""", (item_code, warehouse))
+
+		return qty[0][0] if qty else 0
+
+	except Exception as e:
+		frappe.log_error(f"Error fetching stock for {item_code} in {warehouse}: {e}")
+		return 0
+
+@frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_technicians_by_service_center(doctype, txt, searchfield, start, page_len, filters):
 	"""
