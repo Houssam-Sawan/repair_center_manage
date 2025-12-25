@@ -565,6 +565,8 @@ def create_stock_transfer(docname):
 	# Update status on Repair Request
 	doc.status = "Parts Allocated"
 	doc.add_log_entry(f"Stock Entry {se.name} created for parts transfer.")
+	doc.stock_transfer = se.name
+
 
 	# Update issued qty (Ideally, this happens on Stock Entry submit, but for simplicity we do it here)
 	for item in doc.required_parts:

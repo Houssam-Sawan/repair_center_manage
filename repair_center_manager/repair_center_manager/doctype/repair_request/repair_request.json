@@ -69,7 +69,11 @@
   "additional_notes",
   "terms_tab",
   "tc_name",
-  "terms"
+  "terms",
+  "other_tab",
+  "sales_invoice",
+  "payment_entry",
+  "stock_transfer"
  ],
  "fields": [
   {
@@ -452,13 +456,39 @@
    "fieldtype": "Currency",
    "label": "Labor Charge",
    "mandatory_depends_on": "eval:doc.repair_type==\"In Warranty\"&frappe.user.has_role(\"Technician\")"
+  },
+  {
+   "fieldname": "other_tab",
+   "fieldtype": "Tab Break",
+   "label": "Other"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_entry",
+   "fieldtype": "Link",
+   "label": "Payment Entry",
+   "options": "Payment Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_transfer",
+   "fieldtype": "Link",
+   "label": "Stock Transfer",
+   "options": "Stock Entry",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-25 05:16:55.435436",
+ "modified": "2025-12-26 01:44:39.617722",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
