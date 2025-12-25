@@ -22,7 +22,7 @@ frappe.ui.form.on("Repair Request", {
  */
         frm.set_intro("");
 
-                // Filter for assigned_technician
+        // Filter for assigned_technician
         // Only show users who are 'Technician' role AND are linked to the selected Service Center 
         frm.set_query('assigned_technician', function(doc) {
             if (!doc.service_center) {
