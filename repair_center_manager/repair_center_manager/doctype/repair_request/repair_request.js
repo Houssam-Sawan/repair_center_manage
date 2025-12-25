@@ -163,9 +163,23 @@ frappe.ui.form.on("Repair Request", {
                  }
             }
                         // =================================================================
-            // == STATUS: Repaired (Receptionist Action: DELIVER) ==
+            // == STATUS: Repaired (Receptionist Action: Receive Payment) ==
             // =================================================================
             if (frm.doc.status === 'Repaired' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
+                 frm.add_custom_button(__('Receive Payment'), function() {
+                    frappe.call({
+                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.recieve_payment",
+                        args: { 
+                            docname: frm.doc.name 
+                        },
+                        callback: () => frm.reload_doc()
+                    });
+                }).addClass('btn-primary');
+            }
+                        // =================================================================
+            // == STATUS: Paid (Receptionist Action: DELIVER) ==
+            // =================================================================
+            if (frm.doc.status === 'Paid' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
                  frm.add_custom_button(__('Deliver to Customer'), function() {
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.deliver_to_customer",
@@ -176,7 +190,6 @@ frappe.ui.form.on("Repair Request", {
                     });
                 }).addClass('btn-primary');
             }
-
 	},
 
 	    /**

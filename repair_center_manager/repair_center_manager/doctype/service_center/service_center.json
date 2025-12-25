@@ -9,6 +9,7 @@
   "service_center_name",
   "branch",
   "company",
+  "address",
   "column_break_wzgl",
   "service_center_abbr",
   "store_warehouse",
@@ -66,12 +67,17 @@
    "label": "Service Center Abbreviation",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Data",
+   "label": "Address"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-30 12:13:43.761541",
+ "modified": "2025-12-25 03:52:42.970266",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Service Center",

@@ -175,7 +175,7 @@ class RepairRequest(Document):
 		"""Prevent field edits after certain workflow states or by specific roles."""
 		if self.status in ["In Progress", "Pending Parts Allocation", "Parts Allocated","Repaired", "Delivered", "Pending for Spare Parts"]:
             # Bypass for managers or admins
-			if "SC Manager" not in frappe.get_roles(frappe.session.user) and not frappe.session.user == "Administrator":
+			if "SC Manager" not in frappe.get_roles(frappe.session.user) and not  "Technician" not in frappe.get_roles(frappe.session.user) and not frappe.session.user == "Administrator":
                 # Compare current values with database values
 				if not self.is_new():
 					old_doc = frappe.get_doc(self.doctype, self.name)
@@ -623,12 +623,26 @@ def complete_repair(docname):
 @frappe.whitelist()
 def deliver_to_customer(docname):
 	"""
+	Set status to 'Paid' when the device is handed over to the customer.
+	Called from 'Receive Payment' button.
+	"""
+	doc = frappe.get_doc("Repair Request", docname)
+	if doc.status != "Repaired":
+		frappe.throw("Can only Pay when repair status is 'Repaired'.")
+
+	doc.status = "Paid"
+	doc.add_log_entry("Payment Recieved")
+	doc.save(ignore_permissions=True)
+
+@frappe.whitelist()
+def deliver_to_customer(docname):
+	"""
 	Set status to 'Delivered' when the device is handed over to the customer.
 	Called from 'Deliver to Customer' button.
 	"""
 	doc = frappe.get_doc("Repair Request", docname)
-	if doc.status != "Repaired":
-		frappe.throw("Can only deliver when repair status is 'Repaired'.")
+	if doc.status != "Paid":
+		frappe.throw("Can only deliver when repair status is 'Paid'.")
 
 	doc.status = "Delivered"
 	doc.add_log_entry("Device delivered to customer.")
