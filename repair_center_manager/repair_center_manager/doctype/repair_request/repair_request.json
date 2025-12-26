@@ -70,10 +70,7 @@
   "terms_tab",
   "tc_name",
   "terms",
-  "other_tab",
-  "sales_invoice",
-  "payment_entry",
-  "stock_transfer"
+  "tab_6_tab"
  ],
  "fields": [
   {
@@ -314,7 +311,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Not Saved\nOpen\nIn Progress\nPending Parts Allocation\nPending for Spare Parts\nParts Allocated\nRepaired\nDelivered\nCancelled",
+   "options": "Not Saved\nOpen\nIn Progress\nPending Parts Allocation\nPending for Spare Parts\nParts Allocated\nRepaired\nPaid\nDelivered\nCancelled",
    "print_hide": 1,
    "read_only": 1,
    "show_on_timeline": 1
@@ -458,37 +455,33 @@
    "mandatory_depends_on": "eval:doc.repair_type==\"In Warranty\"&frappe.user.has_role(\"Technician\")"
   },
   {
-   "fieldname": "other_tab",
+   "fieldname": "tab_6_tab",
    "fieldtype": "Tab Break",
-   "label": "Other"
-  },
-  {
-   "fieldname": "sales_invoice",
-   "fieldtype": "Link",
-   "label": "Sales Invoice",
-   "options": "Sales Invoice",
-   "read_only": 1
-  },
-  {
-   "fieldname": "payment_entry",
-   "fieldtype": "Link",
-   "label": "Payment Entry",
-   "options": "Payment Entry",
-   "read_only": 1
-  },
-  {
-   "fieldname": "stock_transfer",
-   "fieldtype": "Link",
-   "label": "Stock Transfer",
-   "options": "Stock Entry",
-   "read_only": 1
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2025-12-26 01:44:39.617722",
+ "links": [
+  {
+   "group": "Reference",
+   "link_doctype": "Sales Invoice",
+   "link_fieldname": "custom_repair_request"
+  },
+  {
+   "group": "Reference",
+   "link_doctype": "Payment Entry",
+   "link_fieldname": "custom_repair_request"
+  },
+  {
+   "group": "Reference",
+   "link_doctype": "Stock Entry",
+   "link_fieldname": "custom_repair_request"
+  }
+ ],
+ "modified": "2025-12-26 05:02:46.142759",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",

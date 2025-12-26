@@ -18,8 +18,9 @@ frappe.listview_settings["Repair Request"] = {
 			"Pending for Spare Parts": "orange",
 			"Parts Allocated": "light-blue",
 			"Repaired": "green",
+			"Paid": "green",
 			"Delivered": "green",
-			"Cancelled": "grey"
+			"Cancelled": "red"
 		};
 		return [__(doc.status), status_colors[doc.status], "status,=," + doc.status];
 	}

@@ -629,6 +629,8 @@ def recieve_payment(docname):
 	si.posting_date = frappe.utils.nowdate()
 	si.due_date = frappe.utils.nowdate()
 	si.set_posting_time = 1
+	si.custom_repair_request = doc.name
+
 	for part in doc.required_parts:
 		si.append("items", {
 			"item_code": part.item_code,
@@ -650,6 +652,13 @@ def recieve_payment(docname):
 	pe.company = sc_details.company
 	pe.paid_amount = doc.total
 	pe.received_amount = doc.total
+	pe.base_paid_amount = doc.total
+	pe.base_received_amount = doc.total
+	pe.target_exchange_rate = 1
+	pe.source_exchange_rate = 1
+	pe.paid_to = sc_details.default_cash_account
+	pe.paid_to_account_currency = frappe.db.get_value("Account", sc_details.default_cash_account, "account_currency")
+	#pe.custom_repair_request = doc.name
 
 	pe.append("references", {
 		"reference_doctype": "Sales Invoice",
