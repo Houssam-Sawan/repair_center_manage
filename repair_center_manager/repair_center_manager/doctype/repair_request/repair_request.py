@@ -599,58 +599,14 @@ def complete_repair(docname):
 	if not sc_details.store_warehouse or not sc_details.wip_warehouse:
 		frappe.throw("Service Center is missing Store or WIP Warehouse configuration.")
 
-	doc.restrict_edits()  # Ensure no edits are made before creating stock transfer
-	existing = frappe.db.exists("Stock Entry", {"stock_entry_type":"Material Issue","custom_repair_request": doc.name})
-	if existing:
-		
-		link = get_link_to_form("Stock Entry", existing)
-		frappe.msgprint(f"Material issue already exists: {link}")
-		# Update status on Repair Request
-		doc.status = "Repaired"
-		doc.add_log_entry(f"Stock Entry {link} created for parts transfer.")
-		doc.save()
-
-	# Create the Stock Entry
-	se = frappe.new_doc("Stock Entry")
-	se.stock_entry_type = "Material Issue"
-	se.set("purpose", "Material Issue") # ERPNext 14+
-	se.from_warehouse = sc_details.wip_warehouse
-	se.custom_repair_request = doc.name # Link it back
-
-	# Add items
-	total_issued = 0
-	for item in doc.required_parts:
-		qty_to_issue = item.issued_qty
-
-		# Check availability
-		available_qty = get_item_availability(item.item_code, doc.service_center,"wip_warehouse")
-		if qty_to_issue > available_qty:
-			frappe.throw(f"Not enough stock for {item.item_code}. Required: {qty_to_issue}, Available: {available_qty}")
-
-		se.append("items", {
-			"item_code": item.item_code,
-			"qty": qty_to_issue,
-			"s_warehouse": sc_details.wip_warehouse,
-			#"t_warehouse": sc_details.wip_warehouse,
-			"inventory_type": "Stock", # ERPNext 15+
-			"reference_doctype": "Repair Request", # Link line item
-			"reference_docname": doc.name # Link line item
-		})
-		total_issued += 1
-
-	if total_issued == 0:
-		frappe.throw("No parts to issue or all parts have already been issued.")
-	# Save and return to client
-	se.insert(ignore_permissions=True)
-	se.submit()
+	doc.restrict_edits()  # Ensure no edits are made before completing repair
 	# Update status on Repair Request
 	doc.status = "Repaired"
-	doc.add_log_entry(f"Stock Entry {se.name} created for parts Consumption.")
-
+	doc.add_log_entry(f"Repair marked as 'Repaired' by {frappe.session.user}.")
 	doc.save()
 
 @frappe.whitelist()
-def deliver_to_customer(docname):
+def recieve_payment(docname):
 	"""
 	Set status to 'Paid' when the device is handed over to the customer.
 	Called from 'Receive Payment' button.
@@ -658,10 +614,65 @@ def deliver_to_customer(docname):
 	doc = frappe.get_doc("Repair Request", docname)
 	if doc.status != "Repaired":
 		frappe.throw("Can only Pay when repair status is 'Repaired'.")
+	
+	if doc.total <= 0:
+		frappe.throw("Total amount must be greater than zero to receive payment.")
+	
+	if doc.status == "Paid":
+		frappe.throw("Payment has already been received for this repair.")
+	
+	# Create a Sales Invoice
+	si = frappe.new_doc("Sales Invoice")
+	si.customer = doc.customer
+	sc_details = frappe.get_doc("Service Center", doc.service_center)
+	si.company = sc_details.company
+	si.posting_date = frappe.utils.nowdate()
+	si.due_date = frappe.utils.nowdate()
+	si.set_posting_time = 1
+	for part in doc.required_parts:
+		si.append("items", {
+			"item_code": part.item_code,
+			"qty": part.required_qty,
+			"rate": part.price,
+			"warehouse": sc_details.wip_warehouse
+		})
+	
+	si.insert(ignore_permissions=True)
+	si.submit()
 
+	# Create Payment Entry
+	pe = frappe.new_doc("Payment Entry")
+	pe.payment_type = "Receive"
+	pe.posting_date = frappe.utils.nowdate()
+	pe.mode_of_payment = sc_details.mode_of_payment
+	pe.party_type = "Customer"
+	pe.party = doc.customer
+	pe.company = sc_details.company
+	pe.paid_amount = doc.total
+	pe.received_amount = doc.total
+
+	pe.append("references", {
+		"reference_doctype": "Sales Invoice",
+		"reference_name": si.name,
+		"total_amount": si.grand_total,
+		"outstanding_amount": si.outstanding_amount,
+		"allocated_amount": doc.total
+	})
+
+	pe.insert(ignore_permissions=True)
+	pe.submit()
+
+	# Update Repair Request
+	doc.sales_invoice = si.name
+	doc.payment_entry = pe.name
 	doc.status = "Paid"
-	doc.add_log_entry("Payment Recieved")
+	doc.add_log_entry(f"Payment Recieved by {frappe.session.user}.")
 	doc.save(ignore_permissions=True)
+
+	return {
+		"invoice": si.name,
+		"payment": pe.name
+	}
 
 @frappe.whitelist()
 def deliver_to_customer(docname):

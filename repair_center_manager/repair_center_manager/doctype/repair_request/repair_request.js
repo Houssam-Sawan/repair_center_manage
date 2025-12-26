@@ -172,7 +172,16 @@ frappe.ui.form.on("Repair Request", {
                         args: { 
                             docname: frm.doc.name 
                         },
-                        callback: () => frm.reload_doc()
+                        callback: (r) {
+                            if (r.message) {
+                                frappe.msgprint(
+                                    `Payment received successfully.<br>
+                                    Invoice: ${r.message.invoice}<br>
+                                    Payment Entry: ${r.message.payment}`
+                                );
+                                frm.reload_doc();
+                            }
+                        }
                     });
                 }).addClass('btn-primary');
             }
