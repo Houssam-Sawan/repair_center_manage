@@ -112,14 +112,14 @@ class RepairRequest(Document):
 		if self.is_new():
 			self.status = "Open"
 		
-		if "Service Center Warehouse Manager" in frappe.get_roles(frappe.session.user) :
-			self.restrict_edits()
-		if self.status in ["In Progress","Pending Parts Allocation", "Pending for Spare Parts", "Parts Allocated"] and "Receptionist" in frappe.get_roles(frappe.session.user) :
-			self.restrict_edits_receptionist()
-		if self.status in ["Pending Parts Allocation", "Pending for Spare Parts", "Parts Allocated"] and "Technician" in frappe.get_roles(frappe.session.user) :
-			self.restrict_edits()		
+		#if "Service Center Warehouse Manager" in frappe.get_roles(frappe.session.user) :
+			#self.restrict_edits()
+		#if self.status in ["In Progress","Pending Parts Allocation", "Pending for Spare Parts", "Parts Allocated"] and "Receptionist" in frappe.get_roles(frappe.session.user) :
+			#self.restrict_edits_receptionist()
+		#if self.status in ["Pending Parts Allocation", "Pending for Spare Parts", "Parts Allocated"] and "Technician" in frappe.get_roles(frappe.session.user) :
+			#self.restrict_edits()		
 		if self.status in ["Pending Parts Allocation", "Parts Allocated","Repaired", "Delivered", "Pending for Spare Parts"]:
-			self.restrict_edits()
+			#self.restrict_edits()
 			# Ensure at least one part is requested
 			if not self.required_parts or len(self.required_parts) == 0:
 				frappe.throw(_("Please add at least one required part before setting status to 'Pending Parts Allocation'."))
@@ -144,7 +144,7 @@ class RepairRequest(Document):
 			frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters or 'NA'."))
 
 	def restrict_edits(self):
-		"""Prevent field edits after certain workflow states or by specific roles."""
+		
 		if self.status in ["Pending Parts Allocation", "Parts Allocated", "Repaired", "Delivered", "Pending for Spare Parts"]:
             # Bypass for managers or admins
 			if "SC Manager" not in frappe.get_roles(frappe.session.user) and not frappe.session.user == "Administrator":
@@ -250,6 +250,16 @@ class RepairRequest(Document):
 					subject=f"Spare parts requested for Repair: {self.name}",
 					channel="System Notification"
 				)
+		# 3. Status -> Any -> Assigned technichian changed notified
+		if self.get_doc_before_save().assigned_technician != self.assigned_technician:
+			# Use the custom function to get users based on assignment DocType
+			new_technician = self.assigned_technician
+			self.create_notification(
+				user=new_technician,
+				subject=f"You have been assigned to Repair Request: {self.name}",
+				channel="System Notification"
+			)
+
 	def get_users_by_role_and_service_center(self, role, service_center):
 		"""
 		Fetches list of users with a specific role at a specific service center
@@ -438,7 +448,7 @@ def request_parts_from_warehouse(docname):
 	doc = frappe.get_doc("Repair Request", docname)
 	if doc.status != "In Progress":
 		frappe.throw("Can only request parts when repair is 'In Progress'.")
-	doc.restrict_edits()  # Ensure no edits are made before requesting parts
+	#doc.restrict_edits()  # Ensure no edits are made before requesting parts
 	doc.status = "Pending Parts Allocation"
 	doc.save()
 	frappe.msgprint(_("Parts requested successfully. Warehouse manager has been notified."), alert=True)
@@ -504,7 +514,7 @@ def create_stock_transfer(docname):
 	if not sc_details.store_warehouse or not sc_details.wip_warehouse:
 		frappe.throw("Service Center is missing Store or WIP Warehouse configuration.")
 
-	doc.restrict_edits()  # Ensure no edits are made before creating stock transfer
+	#Wdoc.restrict_edits()  # Ensure no edits are made before creating stock transfer
 	existing = frappe.db.exists("Stock Entry", {"custom_repair_request": doc.name})
 	if existing:
 		
@@ -599,7 +609,7 @@ def complete_repair(docname):
 	if not sc_details.store_warehouse or not sc_details.wip_warehouse:
 		frappe.throw("Service Center is missing Store or WIP Warehouse configuration.")
 
-	doc.restrict_edits()  # Ensure no edits are made before completing repair
+	#doc.restrict_edits()  # Ensure no edits are made before completing repair
 	# Update status on Repair Request
 	doc.status = "Repaired"
 	doc.add_log_entry(f"Repair marked as 'Repaired' by {frappe.session.user}.")
@@ -622,6 +632,7 @@ def recieve_payment(docname):
 		frappe.throw("Payment has already been received for this repair.")
 	
 	# Create a Sales Invoice
+
 	si = frappe.new_doc("Sales Invoice")
 	si.customer = doc.customer
 	sc_details = frappe.get_doc("Service Center", doc.service_center)
@@ -639,6 +650,14 @@ def recieve_payment(docname):
 			"warehouse": sc_details.wip_warehouse
 		})
 	
+	# Add labor charge as a separate item if applicable
+	if doc.labor_charge and doc.labor_charge > 0:
+		si.append("items", {
+			"item_code": sc_details.labor_charge_item,
+			"qty": 1,
+			"rate": doc.labor_charge,
+			"warehouse": sc_details.wip_warehouse
+		})
 	si.insert(ignore_permissions=True)
 	si.submit()
 
@@ -670,6 +689,7 @@ def recieve_payment(docname):
 
 	pe.insert(ignore_permissions=True)
 	pe.submit()
+
 
 	# Update Repair Request
 	doc.sales_invoice = si.name

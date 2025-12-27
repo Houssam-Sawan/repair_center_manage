@@ -1,0 +1,57 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-27 09:15:07.752193",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+    "qty",
+    "uom",
+    "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1
+  },
+    {
+        "fieldname": "qty",
+        "label": "Quantity",
+        "fieldtype": "Float",
+        "reqd": 1
+    },
+    {
+        "fieldname": "uom",
+        "label": "UOM",
+        "fieldtype": "Link",
+        "options": "UOM",
+        "reqd": 1
+    },
+    {
+        "fieldname": "description",
+        "label": "Description",
+        "fieldtype": "Data"
+    }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-27 09:16:08.446013",
+ "modified_by": "Administrator",
+ "module": "Repair Center Manager",
+ "name": "SC Stock Transfer Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
