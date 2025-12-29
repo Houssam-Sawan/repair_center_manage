@@ -1,19 +1,26 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:SST-{YYYY}-{MM}-{DD}-{#####}",
  "creation": "2025-12-27 09:12:03.659048",
  "doctype": "DocType",
+ "document_type": "Other",
  "engine": "InnoDB",
  "field_order": [
   "section_break_3ygm",
   "amended_from",
-    "from_service_center",
-    "to_service_center",
-    "status",
-    "requested_by",
-    "approved_by",
-    "received_by",
-    "items"
+  "from_service_center",
+  "column_break_fehp",
+  "status",
+  "to_service_center",
+  "section_break_bivx",
+  "requested_by",
+  "received_by",
+  "column_break_lobt",
+  "approved_by",
+  "section_break_cnsj",
+  "items",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -31,65 +38,92 @@
    "search_index": 1
   },
   {
-      "fieldname": "from_service_center",
-      "label": "From Service Center",
-      "fieldtype": "Link",
-      "options": "Warehouse",
-      "reqd": 1
-    },
-    {
-      "fieldname": "to_service_center",
-      "label": "To Service Center",
-      "fieldtype": "Link",
-      "options": "Warehouse",
-      "reqd": 1
-    },
-    {
-      "fieldname": "status",
-      "label": "Status",
-      "fieldtype": "Select",
-      "options": "Draft\nPending Approval\nApproved\nCompleted",
-      "default": "Draft",
-      "read_only": 1
-    },
-    {
-      "fieldname": "requested_by",
-      "label": "Requested By",
-      "fieldtype": "Link",
-      "options": "User",
-      "read_only": 1
-    },
-    {
-      "fieldname": "approved_by",
-      "label": "Approved By",
-      "fieldtype": "Link",
-      "options": "User",
-      "read_only": 1
-    },
-    {
-      "fieldname": "received_by",
-      "label": "Received By",
-      "fieldtype": "Link",
-      "options": "User",
-      "read_only": 1
-    },
-    {
-      "fieldname": "items",
-      "label": "Items",
-      "fieldtype": "Table",
-      "options": "SC Stock Transfer Item",
-      "reqd": 1
-    }
+   "fieldname": "from_service_center",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "From Service Center",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_service_center",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "To Service Center",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_fehp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Status",
+   "options": "Draft\nPending Approval\nApproved\nCompleted"
+  },
+  {
+   "fieldname": "section_break_bivx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lobt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_by",
+   "fieldtype": "Link",
+   "label": "Received By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_cnsj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "SC Stock Transfer Item"
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
+  }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-27 09:12:03.659048",
+ "modified": "2025-12-27 11:05:33.217775",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
- "autoname": "prefix:ST-,YY,MM,#####",
  "name": "SC Stock Transfer",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -110,5 +144,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }
