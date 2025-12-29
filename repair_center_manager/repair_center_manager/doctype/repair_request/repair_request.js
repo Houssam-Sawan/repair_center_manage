@@ -338,9 +338,15 @@ function calculate_totals(frm, cdt, cdn) {
     (frm.doc.required_parts || []).forEach(row => {
         if (row.required_qty && row.price) {
             total += row.required_qty * row.price;
+            row.amount = row.required_qty * row.price;
+            frappe.model.set_value(cdt, cdn, 'amount', row.amount);
+            refresh_field('required_parts');
         }
         if (row.required_qty && row.item_cost) {
             total_cost += row.required_qty * row.item_cost;
+            row.amount_cost = row.required_qty * row.item_cost;
+            frappe.model.set_value(cdt, cdn, 'amount_cost', row.amount_cost);
+            refresh_field('required_parts');
         }
     });
 

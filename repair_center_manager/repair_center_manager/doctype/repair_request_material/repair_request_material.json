@@ -9,11 +9,14 @@
   "description_column",
   "item_code",
   "item_name",
+  "description",
   "required_qty",
   "available_qty",
   "price",
   "item_cost",
+  "amount_cost",
   "issued_qty",
+  "amount",
   "small_text_aodo"
  ],
  "fields": [
@@ -75,13 +78,29 @@
    "fieldtype": "Currency",
    "label": "Item Cost",
    "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "amount_cost",
+   "fieldtype": "Currency",
+   "label": "Amount Cost"
+  },
+  {
+   "fetch_from": "item_code.description",
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-25 16:26:25.795175",
+ "modified": "2025-12-29 21:24:03.384660",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request Material",
