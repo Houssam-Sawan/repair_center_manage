@@ -654,11 +654,12 @@ def recieve_payment(docname):
 	# Add labor charge as a separate item if applicable
 	if doc.labor_charge and doc.labor_charge > 0:
 		si.append("items", {
-			"item_code": sc_details.labor_charge_item,
+			"item_code": "Service Charge",  # Assuming a generic item for labor charge
 			"qty": 1,
 			"rate": doc.labor_charge,
 			"warehouse": sc_details.wip_warehouse
 		})
+
 	si.insert(ignore_permissions=True)
 	si.submit()
 

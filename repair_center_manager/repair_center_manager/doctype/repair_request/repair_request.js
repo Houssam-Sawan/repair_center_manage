@@ -6,6 +6,18 @@ frappe.ui.form.on("Repair Request", {
     required_parts_delete: function(frm){
         calculate_totals(frm);
     },
+    
+    brand: function(frm, cdt, cdn) {
+        calculate_labor_charge(frm);
+    },
+
+    repair_type: function(frm, cdt, cdn) {
+        calculate_labor_charge(frm);
+    },
+
+    resolution: function(frm, cdt, cdn) {
+        calculate_labor_charge(frm);
+    },
 
 	    /**
      * Onload: Set filters
@@ -23,7 +35,6 @@ frappe.ui.form.on("Repair Request", {
  */
         frm.set_intro("");
 
-        calculate_labor_charge(frm);
 
         // Filter for assigned_technician
         // Only show users who are 'Technician' role AND are linked to the selected Service Center 
@@ -327,9 +338,7 @@ frappe.ui.form.on('Repair Request Material', {
         calculate_totals(frm);
     },
 
-    brand: calculate_labor_charge,
-    repair_type: calculate_labor_charge,
-    resolution: calculate_labor_charge,
+
     
     
 });
@@ -377,11 +386,36 @@ function calculate_labor_charge(frm) {
 
     if (repair_type == 'In Warranty') {
         //get labor charge document
-        frappe.db.get_value('Labor Charge', { 'brand': brand , 'service_charge_type': resolution}, 'labor_charge', 'currency')
+        frappe.db.get_value('Labor Charge', { 'brand': brand , 'service_charge_type': resolution}, 'labor_charge')
         .then(r => {
             if (r.message) {
-                frappe.msgprint(r.message.labor_charge);
+                //frappe.msgprint(r.message.labor_charge);
                 labor_charge = r.message.labor_charge || 0;
+                //Get company exchange rate
+                frappe.db.get_value('Company', frm.doc.company, 'default_currency')
+                .then(comp => {
+                    if (comp.message) {
+                        let company_currency = comp.message.default_currency;
+                        //Convert labor charge to company currency if needed
+                        frappe.call({
+                            method: 'erpnext.setup.utils.get_exchange_rate',
+                            args: {
+                                from_currency: 'USD', // Assuming labor charge is in USD
+                                to_currency: company_currency
+                            },
+                            callback: function(conv) {
+                                if (conv.message) {
+                                    labor_charge = conv.message * labor_charge;
+                                    frm.set_value('labor_charge', labor_charge);
+                                    frm.set_value('profit', labor_charge + total - total_cost);
+                                    refresh_field('labor_charge');
+                                    refresh_field('profit');
+                                }
+                            }
+                        });
+                    }
+                });
+            } else {
                 frm.set_value('labor_charge', labor_charge);
                 frm.set_value('profit', labor_charge + total - total_cost);
                 refresh_field('labor_charge');
@@ -391,8 +425,9 @@ function calculate_labor_charge(frm) {
 
     }
 
-    saved_labor_charge = frappe
+
 
     frm.set_value('profit', labor_charge + total - total_cost);
     refresh_field('profit');
+    refresh_field('labor_charge');
 }
