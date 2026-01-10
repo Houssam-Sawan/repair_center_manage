@@ -115,7 +115,8 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer",
-   "print_hide": 1
+   "print_hide": 1,
+   "reqd": 1
   },
   {
    "bold": 1,
@@ -217,7 +218,6 @@
    "label": "Condition Photo"
   },
   {
-   "depends_on": "eval:frappe.user.has_role(\"Technician\") || frappe.user.has_role(\"Service Center Warehouse Manager\")",
    "fieldname": "tab_2_tab",
    "fieldtype": "Tab Break",
    "label": "Technical"
@@ -321,7 +321,8 @@
    "fieldname": "customer_mobile_number",
    "fieldtype": "Data",
    "label": "Mobile Number",
-   "read_only": 1
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "total",
@@ -426,6 +427,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval:frappe.user.has_role(\"Service Manager\")",
    "fieldname": "total_cost",
    "fieldtype": "Currency",
    "label": "Total Cost"
@@ -435,6 +437,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:frappe.user.has_role(\"Service Manager\")",
    "fieldname": "profit",
    "fieldtype": "Currency",
    "label": "Profit"
@@ -451,8 +454,7 @@
    "depends_on": "eval:doc.repair_type==\"In Warranty\"",
    "fieldname": "labor_charge",
    "fieldtype": "Currency",
-   "label": "Labor Charge",
-   "mandatory_depends_on": "eval:doc.repair_type==\"In Warranty\"&frappe.user.has_role(\"Technician\")"
+   "label": "Labor Charge"
   },
   {
    "fieldname": "tab_6_tab",
@@ -481,7 +483,7 @@
    "link_fieldname": "custom_repair_request"
   }
  ],
- "modified": "2025-12-26 05:02:46.142759",
+ "modified": "2026-01-09 04:28:10.313296",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",

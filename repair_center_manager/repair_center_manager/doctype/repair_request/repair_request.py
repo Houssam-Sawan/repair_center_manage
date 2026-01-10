@@ -251,14 +251,15 @@ class RepairRequest(Document):
 					channel="System Notification"
 				)
 		# 3. Status -> Any -> Assigned technichian changed notified
-		if self.get_doc_before_save().assigned_technician != self.assigned_technician:
-			# Use the custom function to get users based on assignment DocType
-			new_technician = self.assigned_technician
-			self.create_notification(
-				user=new_technician,
-				subject=f"You have been assigned to Repair Request: {self.name}",
-				channel="System Notification"
-			)
+		if self.status in ["In Progress","Pending Parts Allocation", "Parts Allocated","Repaired", "Delivered", "Pending for Spare Parts"] :
+			if self.get_doc_before_save().assigned_technician != self.assigned_technician:
+				# Use the custom function to get users based on assignment DocType
+				new_technician = self.assigned_technician
+				self.create_notification(
+					user=new_technician,
+					subject=f"You have been assigned to Repair Request: {self.name}",
+					channel="System Notification"
+				)
 
 	def get_users_by_role_and_service_center(self, role, service_center):
 		"""
