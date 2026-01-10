@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "format: LC-{brand}-{repair_level}-{service_charge_type}",
+ "creation": "2026-01-09 04:51:12.965818",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "brand",
+  "repair_level",
+  "service_charge_type",
+  "labor_charge",
+  "currency"
+ ],
+ "fields": [
+  {
+   "fieldname": "brand",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Brand",
+   "options": "Brand"
+  },
+  {
+   "fieldname": "repair_level",
+   "fieldtype": "Select",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Repair Level",
+   "options": "0\n1\n2\n3"
+  },
+  {
+   "fieldname": "service_charge_type",
+   "fieldtype": "Select",
+   "label": "Service Charge Type",
+   "options": "Software\nSwap\nParts replacement"
+  },
+  {
+   "fieldname": "labor_charge",
+   "fieldtype": "Currency",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Labor Charge",
+   "options": "currency"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Currency",
+   "options": "Currency"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-09 06:02:30.624689",
+ "modified_by": "Administrator",
+ "module": "Repair Center Manager",
+ "name": "Labor Charge",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Service Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

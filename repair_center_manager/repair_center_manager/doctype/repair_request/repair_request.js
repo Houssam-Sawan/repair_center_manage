@@ -15,12 +15,15 @@ frappe.ui.form.on("Repair Request", {
 
     },
  	refresh: function(frm) {
+
         
 /*         frm.add_custom_button(__('Test Button'), function() {
             test_button();
         }).addClass('btn-secondary');
  */
         frm.set_intro("");
+
+        calculate_labor_charge(frm);
 
         // Filter for assigned_technician
         // Only show users who are 'Technician' role AND are linked to the selected Service Center 
@@ -37,6 +40,8 @@ frappe.ui.form.on("Repair Request", {
                
             };
         });
+
+
 
 /*         if (frm.doc.status !== "Not Saved") {
             frm.disable_save();
@@ -320,7 +325,11 @@ frappe.ui.form.on('Repair Request Material', {
     price: calculate_totals,
     required_parts_remove: function(frm, cdt, cdn) {
         calculate_totals(frm);
-    }
+    },
+
+    brand: calculate_labor_charge,
+    repair_type: calculate_labor_charge,
+    resolution: calculate_labor_charge,
     
     
 });
@@ -355,4 +364,35 @@ function calculate_totals(frm, cdt, cdn) {
     frm.set_value('total_cost', total_cost);
     frm.set_value('profit', labor_charge + total - total_cost);
     refresh_field('total');
+}
+
+function calculate_labor_charge(frm) {
+
+    let labor_charge = frm.doc.labor_charge || 0;
+    let total = frm.doc.total || 0;
+    let total_cost = frm.doc.total_cost || 0;
+    let repair_type = frm.doc.repair_type || '';
+    let resolution = frm.doc.resolution || '';
+    let brand = frm.doc.brand || '';
+
+    if (repair_type == 'In Warranty') {
+        //get labor charge document
+        frappe.db.get_value('Labor Charge', { 'brand': brand , 'service_charge_type': resolution}, 'labor_charge', 'currency')
+        .then(r => {
+            if (r.message) {
+                frappe.msgprint(r.message.labor_charge);
+                labor_charge = r.message.labor_charge || 0;
+                frm.set_value('labor_charge', labor_charge);
+                frm.set_value('profit', labor_charge + total - total_cost);
+                refresh_field('labor_charge');
+                refresh_field('profit');
+            }
+        });
+
+    }
+
+    saved_labor_charge = frappe
+
+    frm.set_value('profit', labor_charge + total - total_cost);
+    refresh_field('profit');
 }
