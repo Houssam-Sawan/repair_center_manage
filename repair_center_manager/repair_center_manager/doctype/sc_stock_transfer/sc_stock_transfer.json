@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "format:SST-{YYYY}-{MM}-{DD}-{#####}",
  "creation": "2025-12-27 09:12:03.659048",
@@ -119,7 +120,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-27 11:05:33.217775",
+ "modified": "2026-01-13 07:14:27.042713",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "SC Stock Transfer",

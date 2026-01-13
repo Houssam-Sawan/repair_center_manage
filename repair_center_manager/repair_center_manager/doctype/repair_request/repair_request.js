@@ -8,7 +8,23 @@ frappe.ui.form.on("Repair Request", {
     },
     
     brand: function(frm, cdt, cdn) {
+        frm.set_value('device_model', null);
+        frm.refresh_field('device_model');
+        frm.set_value('brand_manager', null);
+        frm.refresh_field('brand_manager');
+    
         calculate_labor_charge(frm);
+        frappe.db.get_value(
+            'Brand Manager',
+            { 'brand': frm.doc.brand },
+            'name'
+        ).then(r => {
+            if (r && r.message && r.message.name) {
+                frm.set_value('brand_manager', r.message.name);
+                frm.refresh_field('brand_manager');
+            }
+        });
+
     },
 
     repair_type: function(frm, cdt, cdn) {
@@ -78,7 +94,7 @@ frappe.ui.form.on("Repair Request", {
             // =================================================================
             // == STATUS: In Progress (Technician Action: REQUEST PARTS/COMPLETE) ==
             // =================================================================
-            if (frm.doc.status === 'In Progress' && (frappe.user.has_role('Technician') || frappe.user.has_role('SC Manager'))) {
+            if (frm.doc.status === 'In Progress' &&  frm.doc.resolution === 'Parts replacement' && (frappe.user.has_role('Technician') || frappe.user.has_role('SC Manager'))) {
                 //frappe.msgprint(__('You are logged in as: {0}', [frappe.session.user]));
                /*  frm.add_custom_button(__('Test Button'), function() {
                     if (frappe.user.has_role('Technician') ){
@@ -260,6 +276,7 @@ frappe.ui.form.on('Repair Request Material', {
                         frappe.model.set_value(cdt, cdn, 'description', r.message.description);
                     }
                 });
+
             
             // Fetch stock availability from the service center's store
             if (frm.doc.service_center) {
@@ -272,6 +289,10 @@ frappe.ui.form.on('Repair Request Material', {
                     callback: function(r) {
                         if (r.message) {
                             frappe.model.set_value(cdt, cdn, 'available_qty', r.message);
+                        }else {
+                            frappe.model.set_value(cdt, cdn, 'available_qty', 0);
+                            frapppe.model.set_value(cdt, cdn, 'required_qty', 0);
+                            
                         }
                     }
                 });
@@ -290,6 +311,9 @@ frappe.ui.form.on('Repair Request Material', {
                     callback: function(r) {
                         if (r.message) {
                             frappe.model.set_value(cdt, cdn, 'item_cost', r.message);
+                        }
+                        else {
+                            frappe.model.set_value(cdt, cdn, 'item_cost', 0);
                         }
                     }
                 });
@@ -317,23 +341,36 @@ frappe.ui.form.on('Repair Request Material', {
                     calculate_totals(frm, cdt, cdn);
                 } else {
                     frappe.model.set_value(cdt, cdn, 'price', 0);
-                    frappe.msgprint(__('No selling price found for this item'));
+                    //frappe.msgprint(__('No selling price found for this item'));
                 }
             }
         });
         }
+        calculate_totals(frm, cdt, cdn);
     },
 
     /**
      * Refresh child table rows
      */
-    required_parts_refresh: function(frm) {
+    required_qty: function(frm) {
         // This is a placeholder for any logic on table refresh
+        frappe.msgprint(__('Required Parts table refreshed'));
+        calculate_totals(frm);
+    },
+   
+    item_cost: function(frm) {
+        // This is a placeholder for any logic on table refresh
+        frappe.msgprint(__('Required Parts table refreshed'));
+        calculate_totals(frm);
+    },
+    
+    price: function(frm) {
+        // This is a placeholder for any logic on table refresh
+        frappe.msgprint(__('Required Parts table refreshed'));
         calculate_totals(frm);
     },
 
-    required_qty: calculate_totals,
-    price: calculate_totals,
+
     required_parts_remove: function(frm, cdt, cdn) {
         calculate_totals(frm);
     },
@@ -368,6 +405,13 @@ function calculate_totals(frm, cdt, cdn) {
         }
     });
 
+    if (frm.doc.resolution !== 'Parts replacement') {
+        total = 0;
+        total_cost = 0;
+    }
+    if(frm.doc.repair_type === 'In Warranty')  {
+        total = 0;
+    }
     // Set total field value in parent doc
     frm.set_value('total', total);
     frm.set_value('total_cost', total_cost);

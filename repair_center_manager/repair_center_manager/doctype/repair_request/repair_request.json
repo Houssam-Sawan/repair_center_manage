@@ -32,6 +32,7 @@
   "device_details_section",
   "brand",
   "device_model",
+  "brand_manager",
   "column_break_acpg",
   "serial_no",
   "imei_2",
@@ -55,6 +56,8 @@
   "resolution",
   "technical_section",
   "required_parts",
+  "section_break_njur",
+  "new_imei",
   "section_break_rjso",
   "total",
   "column_break_swbu",
@@ -269,6 +272,7 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval:doc.resolution == 'Parts replacement'",
    "fieldname": "required_parts",
    "fieldtype": "Table",
    "label": "Spare Parts",
@@ -342,7 +346,7 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Repair Type",
-   "options": "Out Of Warranty\nIn Warranty\nSwap\nOther",
+   "options": "Out Of Warranty\nIn Warranty\nOther",
    "reqd": 1
   },
   {
@@ -351,6 +355,7 @@
    "label": "Terms"
   },
   {
+   "default": "AR and KU",
    "fieldname": "tc_name",
    "fieldtype": "Link",
    "label": "Terms",
@@ -406,6 +411,7 @@
    "label": "None"
   },
   {
+   "default": "0",
    "fieldname": "suggested_price",
    "fieldtype": "Currency",
    "label": "Suggested Price",
@@ -420,7 +426,7 @@
    "fieldname": "resolution",
    "fieldtype": "Select",
    "label": "Resolution",
-   "options": "Parts replacement\nClean\nSoftware"
+   "options": "Parts replacement\nSwap\nClean\nSoftware"
   },
   {
    "fieldname": "section_break_nbqq",
@@ -451,16 +457,34 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval:doc.repair_type==\"In Warranty\"",
+   "default": "0",
    "fieldname": "labor_charge",
    "fieldtype": "Currency",
-   "label": "Labor Charge"
+   "label": "Labor Charge",
+   "read_only": 1
   },
   {
    "fieldname": "tab_6_tab",
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "depends_on": "eval:doc.resolution == 'Swap'",
+   "fieldname": "new_imei",
+   "fieldtype": "Data",
+   "label": "New IMEI",
+   "mandatory_depends_on": "eval:doc.resolution == 'Swap'"
+  },
+  {
+   "fieldname": "section_break_njur",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "brand_manager",
+   "fieldtype": "Link",
+   "label": "Brand Manager",
+   "options": "Brand Manager"
   }
  ],
  "grid_page_length": 50,
@@ -483,7 +507,7 @@
    "link_fieldname": "custom_repair_request"
   }
  ],
- "modified": "2026-01-09 04:28:10.313296",
+ "modified": "2026-01-13 07:36:12.146841",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
