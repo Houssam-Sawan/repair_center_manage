@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:service_center_name",
  "creation": "2025-10-30 11:21:01.898920",
@@ -94,7 +95,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-25 19:03:37.102012",
+ "modified": "2026-01-13 07:14:27.741990",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Service Center",

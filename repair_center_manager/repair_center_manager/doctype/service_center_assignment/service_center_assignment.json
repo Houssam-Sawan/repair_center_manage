@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:user",
  "creation": "2025-11-03 15:50:24.045581",
@@ -30,7 +31,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-06 11:50:28.276076",
+ "modified": "2026-01-13 07:14:28.243996",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Service Center Assignment",
