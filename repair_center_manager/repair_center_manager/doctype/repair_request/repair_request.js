@@ -94,7 +94,7 @@ frappe.ui.form.on("Repair Request", {
             // =================================================================
             // == STATUS: In Progress (Technician Action: REQUEST PARTS/COMPLETE) ==
             // =================================================================
-            if (frm.doc.status === 'In Progress' &&  frm.doc.resolution === 'Parts replacement' && (frappe.user.has_role('Technician') || frappe.user.has_role('SC Manager'))) {
+            if (frm.doc.status === 'In Progress' && (frappe.user.has_role('Technician') || frappe.user.has_role('SC Manager'))) {
                 //frappe.msgprint(__('You are logged in as: {0}', [frappe.session.user]));
                /*  frm.add_custom_button(__('Test Button'), function() {
                     if (frappe.user.has_role('Technician') ){
@@ -104,37 +104,103 @@ frappe.ui.form.on("Repair Request", {
                 }).addClass('btn-secondary'); */
 
                 if (frm.doc.assigned_technician === frappe.session.user || frappe.user.has_role('SC Manager')) {
-                    // Button to request parts
-                    frm.add_custom_button(__('Request Parts'), function() {
-                        if (!frm.doc.required_parts || frm.doc.required_parts.length === 0) {
-                            frappe.msgprint(__("Please add items to the 'Required Parts' table first."));
-                            return;
-                        }
-                        if (!frm.doc.fault_category && !frm.doc.fault_description) {
-                            frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
-                            return;
-                        }
-                        frappe.call({
-                            method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.request_parts_from_warehouse",
-                            args: { 
-                                docname: frm.doc.name 
-                            },
-                            callback: () => frm.reload_doc()
-                        });
-                    }).addClass('btn-primary');
-                    
-                    // Button to complete without parts
-                    frm.add_custom_button(__('Complete Repair'), function() {
-                        if (!frm.doc.fault_category && !frm.doc.fault_description) {
-                            frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
-                            return;
-                        }
-                        frm.set_value('status', 'Repaired');
-                        frm.save();
-                    }).addClass('btn-success');
+                        // Button to request parts
+                    if (frm.doc.resolution === 'Parts replacement'){
+                        frm.add_custom_button(__('Request Parts'), function() {
+                            if (!frm.doc.required_parts || frm.doc.required_parts.length === 0) {
+                                frappe.msgprint(__("Please add items to the 'Required Parts' table first."));
+                                return;
+                            }
+                            if (!frm.doc.fault_category && !frm.doc.fault_description) {
+                                frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
+                                return;
+                            }
+                            frappe.call({
+                                method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.request_parts_from_warehouse",
+                                args: { 
+                                    docname: frm.doc.name 
+                                },
+                                callback: () => frm.reload_doc()
+                            });
+                        }).addClass('btn-primary');
+                    }
+                    else if (frm.doc.resolution === 'Swap') {
+                        // Button to request swap approval from brand manager
+                        frm.add_custom_button(__('Request Swap Approval'), function() {
+                            if (!frm.doc.fault_category && !frm.doc.fault_description) {
+                                frappe.msgprint(__("Please provide Fault Category and Description before requesting swap approval."));
+                                return;
+                            }
+                            frappe.call({
+                                method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.request_swap_approval",
+                                args: { 
+                                    docname: frm.doc.name 
+                                },
+                                callback: () => frm.reload_doc()
+                            });
+                        }).addClass('btn-primary');
+                    }
+                    else {
+                        // Button to complete without parts
+                        frm.add_custom_button(__('Complete Repair'), function() {
+                            if (!frm.doc.fault_category && !frm.doc.fault_description) {
+                                frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
+                                return;
+                            }
+                            frm.set_value('status', 'Repaired');
+                            frm.save();
+                        }).addClass('btn-success');
+                    }
                 }
             }  
 
+            // =================================================================
+            // == STATUS: Awaiting Swap Approval (Brand Manager Action)      ==
+            // =================================================================
+            // Assuming you have a status or field to identify swap requests
+            if (frm.doc.resolution === 'Swap' && frm.doc.status === 'Pending For Swap Approval') {
+                
+                // Fetch the actual 'manager' (email) from the Brand Manager link record
+                    frappe.db.get_value('Brand Manager', frm.doc.brand_manager, 'manager', (r) => {
+                        
+                        // Check if the current user matches the manager email in the linked record
+                        if (r && r.manager === frappe.session.user) {
+                            
+                            // Add Approve Swap Button
+                            frm.add_custom_button(__('Approve Swap'), function() {
+                                frappe.confirm(__('Are you sure you want to APPROVE this swap request?'), function() {
+                                    frappe.call({
+                                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.approve_swap",
+                                        args: { docname: frm.doc.name },
+                                        callback: () => frm.reload_doc()
+                                    });
+                                });
+                            }, __('Actions')).addClass('btn-success');
+
+                            // Add Reject Swap Button
+                            frm.add_custom_button(__('Reject Swap'), function() {
+                                frappe.prompt([
+                                    {
+                                        label: __('Reason for Rejection'),
+                                        fieldname: 'rejection_reason',
+                                        fieldtype: 'Small Text',
+                                        reqd: 1
+                                    }
+                                ], (values) => {
+                                    frappe.call({
+                                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.reject_swap",
+                                        args: { 
+                                            docname: frm.doc.name,
+                                            reason: values.rejection_reason
+                                        },
+                                        callback: () => frm.reload_doc()
+                                    });
+                                }, __('Reject Swap Request'), __('Submit'));
+                            }, __('Actions')).addClass('btn-danger');
+                        }
+                    });
+                
+            }
             // =================================================================
             // == STATUS: Pending Parts Allocation (Warehouse Action) ==
             // =================================================================
@@ -197,7 +263,7 @@ frappe.ui.form.on("Repair Request", {
                         // =================================================================
             // == STATUS: Repaired (Receptionist Action: Receive Payment) ==
             // =================================================================
-            if (frm.doc.status === 'Repaired' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
+            if (frm.doc.status === 'Repaired' && frm.doc.repair_type !== 'In Warranty' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
                  frm.add_custom_button(__('Receive Payment'), function() {
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.recieve_payment",
@@ -220,7 +286,7 @@ frappe.ui.form.on("Repair Request", {
                         // =================================================================
             // == STATUS: Paid (Receptionist Action: DELIVER) ==
             // =================================================================
-            if (frm.doc.status === 'Paid' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
+            if ((frm.doc.repair_type === 'In Warranty' && (frm.doc.status === "Repaired" || frm.doc.status === "Swap Approved")) || (frm.doc.status === 'Paid' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager')))) {
                  frm.add_custom_button(__('Deliver to Customer'), function() {
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.deliver_to_customer",
@@ -434,7 +500,7 @@ function calculate_labor_charge(frm) {
         .then(r => {
             if (r.message) {
                 //frappe.msgprint(r.message.labor_charge);
-                labor_charge = r.message.labor_charge || 0;
+                labor_charge_usd = r.message.labor_charge || 0;
                 //Get company exchange rate
                 frappe.db.get_value('Company', frm.doc.company, 'default_currency')
                 .then(comp => {
@@ -449,10 +515,12 @@ function calculate_labor_charge(frm) {
                             },
                             callback: function(conv) {
                                 if (conv.message) {
-                                    labor_charge = conv.message * labor_charge;
+                                    labor_charge = conv.message * labor_charge_usd;
                                     frm.set_value('labor_charge', labor_charge);
+                                    frm.set_value('labor_charge_usd', labor_charge_usd);
                                     frm.set_value('profit', labor_charge + total - total_cost);
                                     refresh_field('labor_charge');
+                                    refresh_field('labor_charge_usd');
                                     refresh_field('profit');
                                 }
                             }

@@ -36,7 +36,7 @@
    "fieldname": "service_charge_type",
    "fieldtype": "Select",
    "label": "Service Charge Type",
-   "options": "Software\nSwap\nParts replacement"
+   "options": "Software\nSwap\nParts replacement\nClean"
   },
   {
    "fieldname": "labor_charge",
@@ -60,7 +60,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-13 07:14:26.660694",
+ "modified": "2026-01-20 06:27:54.122278",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Labor Charge",
