@@ -147,6 +147,9 @@ frappe.ui.form.on("Repair Request", {
                                 frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
                                 return;
                             }
+                            //  Clear the Spare Parts table
+                            frm.clear_table("required_parts");
+                            frm.refresh_field("required_parts");
                             frm.set_value('status', 'Repaired');
                             frm.save();
                         }).addClass('btn-success');
@@ -257,7 +260,7 @@ frappe.ui.form.on("Repair Request", {
                         },
                         callback: () => frm.reload_doc()
                     });
-                    }).addClass('btn-success');
+                    }).addClass('btn-primary');
                  }
             }
                         // =================================================================
