@@ -317,7 +317,7 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Not Saved\nOpen\nIn Progress\nPending Parts Allocation\nPending for Spare Parts\nParts Allocated\nRepaired\nPaid\nDelivered\nCancelled",
+   "options": "Not Saved\nOpen\nIn Progress\nPending Parts Allocation\nPending for Spare Parts\nPending For Swap Approval\nSwap Approved\nParts Allocated\nRepaired\nPaid\nDelivered\nCancelled",
    "print_hide": 1,
    "read_only": 1,
    "show_on_timeline": 1
@@ -523,7 +523,7 @@
    "link_fieldname": "custom_repair_request"
   }
  ],
- "modified": "2026-01-20 06:53:10.315102",
+ "modified": "2026-01-20 07:38:20.754529",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",

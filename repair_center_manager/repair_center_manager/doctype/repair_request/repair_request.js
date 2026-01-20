@@ -155,6 +155,53 @@ frappe.ui.form.on("Repair Request", {
             }  
 
             // =================================================================
+            // == STATUS: Awaiting Swap Approval (Brand Manager Action)      ==
+            // =================================================================
+            // Assuming you have a status or field to identify swap requests
+            if (frm.doc.resolution === 'Swap' && frm.doc.status === 'Pending For Swap Approval') {
+                
+                // Fetch the actual 'manager' (email) from the Brand Manager link record
+                    frappe.db.get_value('Brand Manager', frm.doc.brand_manager, 'manager', (r) => {
+                        
+                        // Check if the current user matches the manager email in the linked record
+                        if (r && r.manager === frappe.session.user) {
+                            
+                            // Add Approve Swap Button
+                            frm.add_custom_button(__('Approve Swap'), function() {
+                                frappe.confirm(__('Are you sure you want to APPROVE this swap request?'), function() {
+                                    frappe.call({
+                                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.approve_swap",
+                                        args: { docname: frm.doc.name },
+                                        callback: () => frm.reload_doc()
+                                    });
+                                });
+                            }, __('Actions')).addClass('btn-success');
+
+                            // Add Reject Swap Button
+                            frm.add_custom_button(__('Reject Swap'), function() {
+                                frappe.prompt([
+                                    {
+                                        label: __('Reason for Rejection'),
+                                        fieldname: 'rejection_reason',
+                                        fieldtype: 'Small Text',
+                                        reqd: 1
+                                    }
+                                ], (values) => {
+                                    frappe.call({
+                                        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.reject_swap",
+                                        args: { 
+                                            docname: frm.doc.name,
+                                            reason: values.rejection_reason
+                                        },
+                                        callback: () => frm.reload_doc()
+                                    });
+                                }, __('Reject Swap Request'), __('Submit'));
+                            }, __('Actions')).addClass('btn-danger');
+                        }
+                    });
+                
+            }
+            // =================================================================
             // == STATUS: Pending Parts Allocation (Warehouse Action) ==
             // =================================================================
             if (frm.doc.status === 'Pending Parts Allocation' && (frappe.user.has_role('Service Center Warehouse Manager') || frappe.user.has_role('SC Manager')) ) {
@@ -216,7 +263,7 @@ frappe.ui.form.on("Repair Request", {
                         // =================================================================
             // == STATUS: Repaired (Receptionist Action: Receive Payment) ==
             // =================================================================
-            if (frm.doc.status === 'Repaired' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
+            if (frm.doc.status === 'Repaired' && frm.doc.repair_type !== 'In Warranty' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
                  frm.add_custom_button(__('Receive Payment'), function() {
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.recieve_payment",
@@ -239,7 +286,7 @@ frappe.ui.form.on("Repair Request", {
                         // =================================================================
             // == STATUS: Paid (Receptionist Action: DELIVER) ==
             // =================================================================
-            if (frm.doc.status === 'Paid' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
+            if ((frm.doc.repair_type === 'In Warranty' && (frm.doc.status === "Repaired" || frm.doc.status === "Swap Approved")) || (frm.doc.status === 'Paid' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager')))) {
                  frm.add_custom_button(__('Deliver to Customer'), function() {
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.deliver_to_customer",

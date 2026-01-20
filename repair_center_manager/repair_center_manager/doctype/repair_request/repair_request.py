@@ -122,7 +122,8 @@ class RepairRequest(Document):
 			#self.restrict_edits()
 			# Ensure at least one part is requested
 			if not self.required_parts or len(self.required_parts) == 0:
-				frappe.throw(_("Please add at least one required part before setting status to 'Pending Parts Allocation'."))
+				if self.resolution == "Parts Replacement":
+					frappe.throw(_("Please add at least one required part before setting status to 'Pending Parts Allocation'."))
 
 	def before_save(self):
 		self.log_status_change()
@@ -606,7 +607,7 @@ def complete_repair(docname):
 	"""
 	doc = frappe.get_doc("Repair Request", docname)
 
-	if doc.status != "Parts Allocated":
+	if doc.status != "Parts Allocated" and doc.resolution == "Parts Replacement":
 		frappe.throw("Can only allocate parts when status is 'Parts Allocated'.")
 
 	sc_details = frappe.get_doc("Service Center", doc.service_center)
@@ -618,6 +619,31 @@ def complete_repair(docname):
 	doc.status = "Repaired"
 	doc.add_log_entry(f"Repair marked as 'Repaired' by {frappe.session.user}.")
 	doc.save()
+
+#request_swap_approval: Request Swap approval from Brand manager
+@frappe.whitelist()
+def request_swap_approval(docname):
+	doc = frappe.get_doc("Repair Request", docname)
+
+	if not doc.brand_manager:
+		frappe.throw("Please make sure to select correct brand manager")
+
+
+		# Notify technician
+	doc.create_notification(
+		user=doc.brand_manager,
+		subject=f"New Swap Request assigned: {doc.name} - Status set to Pending For Swap Approval.",
+		channel="System Notification"
+	)
+	#Update the status to Pending For Swap Approval
+	doc.status = "Pending For Swap Approval"
+	doc.add_log_entry(f"Swap requested by {frappe.session.user}.")
+	doc.save()
+
+
+	
+
+
 
 @frappe.whitelist()
 def recieve_payment(docname):
