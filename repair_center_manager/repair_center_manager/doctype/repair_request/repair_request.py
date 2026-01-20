@@ -139,10 +139,13 @@ class RepairRequest(Document):
 		self.handle_notifications()
 
 	def Validate_sn(self):
-		# Example validation: Serial number should not be "12345"
+		# IMEI/Serial Number validation
 		if len(self.serial_no) < 11 and self.serial_no != "NA":
 			frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters or 'NA'."))
 
+		# New IMEI/Serial Number validation for swapped devices
+		if  self.resolution == "Swap" and len(self.new_imei) < 11 :
+			frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters."))
 	def restrict_edits(self):
 		
 		if self.status in ["Pending Parts Allocation", "Parts Allocated", "Repaired", "Delivered", "Pending for Spare Parts"]:

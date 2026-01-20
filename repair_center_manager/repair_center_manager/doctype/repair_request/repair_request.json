@@ -36,6 +36,7 @@
   "column_break_acpg",
   "serial_no",
   "imei_2",
+  "device_status",
   "accessories_section",
   "cable",
   "column_break_izqw",
@@ -62,6 +63,7 @@
   "total",
   "column_break_swbu",
   "labor_charge",
+  "labor_charge_usd",
   "section_break_nbqq",
   "total_cost",
   "column_break_xucw",
@@ -485,6 +487,20 @@
    "fieldtype": "Link",
    "label": "Brand Manager",
    "options": "Brand Manager"
+  },
+  {
+   "fieldname": "device_status",
+   "fieldtype": "Data",
+   "label": "Device Status",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "labor_charge_usd",
+   "fieldtype": "Currency",
+   "label": "Labor Charge USD",
+   "options": "USD",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -507,7 +523,7 @@
    "link_fieldname": "custom_repair_request"
   }
  ],
- "modified": "2026-01-13 07:36:12.146841",
+ "modified": "2026-01-20 06:53:10.315102",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",

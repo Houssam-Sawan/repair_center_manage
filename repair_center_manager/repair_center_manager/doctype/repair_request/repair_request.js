@@ -434,7 +434,7 @@ function calculate_labor_charge(frm) {
         .then(r => {
             if (r.message) {
                 //frappe.msgprint(r.message.labor_charge);
-                labor_charge = r.message.labor_charge || 0;
+                labor_charge_usd = r.message.labor_charge || 0;
                 //Get company exchange rate
                 frappe.db.get_value('Company', frm.doc.company, 'default_currency')
                 .then(comp => {
@@ -449,10 +449,12 @@ function calculate_labor_charge(frm) {
                             },
                             callback: function(conv) {
                                 if (conv.message) {
-                                    labor_charge = conv.message * labor_charge;
+                                    labor_charge = conv.message * labor_charge_usd;
                                     frm.set_value('labor_charge', labor_charge);
+                                    frm.set_value('labor_charge_usd', labor_charge_usd);
                                     frm.set_value('profit', labor_charge + total - total_cost);
                                     refresh_field('labor_charge');
+                                    refresh_field('labor_charge_usd');
                                     refresh_field('profit');
                                 }
                             }
