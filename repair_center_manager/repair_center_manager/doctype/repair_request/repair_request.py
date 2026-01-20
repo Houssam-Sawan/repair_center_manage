@@ -309,6 +309,7 @@ class RepairRequest(Document):
 		notification.document_type = doc.doctype
 		notification.document_name = doc.name
 		notification.channel = channel
+		notification.email_sent = 1
 		notification.insert(ignore_permissions=True)
 		frappe.db.commit() # Notifications need explicit commit
 
@@ -628,10 +629,11 @@ def request_swap_approval(docname):
 	if not doc.brand_manager:
 		frappe.throw("Please make sure to select correct brand manager")
 
-
+	brand_manager = frappe.get_doc("Brand Manager", doc.brand_manager)
+	#frappe.msgprint(_("Requesting swap approval from Brand Manager...{brand_manager.manager}"), alert=True)
 		# Notify technician
 	doc.create_notification(
-		user=doc.brand_manager,
+		user=brand_manager.manager,
 		subject=f"New Swap Request assigned: {doc.name} - Status set to Pending For Swap Approval.",
 		channel="System Notification"
 	)
@@ -641,8 +643,47 @@ def request_swap_approval(docname):
 	doc.save()
 
 
-	
+@frappe.whitelist()
+def approve_swap(docname):
+	doc = frappe.get_doc("Repair Request", docname)
 
+	if doc.status != "Pending For Swap Approval":
+		frappe.throw("Can only approve swap requests when status is 'Pending For Swap Approval'.")
+
+	#Update the status to Swap Approved
+	doc.status = "Swap Approved"
+	doc.add_log_entry(f"Swap approved by {frappe.session.user}.")
+	doc.save(ignore_permissions=True)
+
+	# Notify technician
+	doc.create_notification(
+		user=doc.assigned_technician,
+		subject=f"Swap Request approved: {doc.name} - Status set to In Progress.",
+		channel="System Notification"
+	)	
+
+@frappe.whitelist()
+def reject_swap(docname, reason):
+	doc = frappe.get_doc("Repair Request", docname)
+
+	if doc.status != "Pending For Swap Approval":
+		frappe.throw("Can only reject swap requests when status is 'Pending For Swap Approval'.")
+
+	#Update the status to In Progress
+	doc.status = "In Progress"
+	doc.add_comment(
+		comment_type="Comment", 
+		text=f"Swap Rejection Reason: {reason}"
+	)
+	doc.add_log_entry(f"Swap rejected by {frappe.session.user}. Reason: {reason}")
+	doc.save(ignore_permissions=True)
+
+	# Notify technician
+	doc.create_notification(
+		user=doc.assigned_technician,
+		subject=f"Swap Request rejected: {doc.name} - Status set to Swap Rejected.",
+		channel="System Notification"
+	)
 
 
 @frappe.whitelist()
@@ -741,8 +782,12 @@ def deliver_to_customer(docname):
 	Called from 'Deliver to Customer' button.
 	"""
 	doc = frappe.get_doc("Repair Request", docname)
-	if doc.status != "Paid":
-		frappe.throw("Can only deliver when repair status is 'Paid'.")
+	
+	
+	# Clear Spare Parts table
+	if doc.resolution != "Parts replacement":
+		
+		doc.set("required_parts", [])
 
 	doc.status = "Delivered"
 	doc.add_log_entry("Device delivered to customer.")
