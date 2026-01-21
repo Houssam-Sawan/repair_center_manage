@@ -81,6 +81,15 @@ frappe.ui.form.on("Repair Request", {
         if(frm.doc.status === "Open" && (frappe.user.has_role("Receptionist") || frappe.user.has_role('SC Manager'))) {
             
             frm.add_custom_button("Assign & Start Repair", () => {
+                //Check if the form matches the saved document
+                if (frm.is_dirty()) {
+                    frappe.msgprint({
+                        title: __('Unsaved Changes'),
+                        indicator: 'orange',
+                        message: __('Please save the document before processing, as there are unsaved changes.')
+                    });
+                    return; // Stop the execution
+                }
                 frappe.call({
                     method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.assign_technician_and_start",
                     args: { docname: frm.doc.name ,
@@ -107,6 +116,15 @@ frappe.ui.form.on("Repair Request", {
                         // Button to request parts
                     if (frm.doc.resolution === 'Parts replacement'){
                         frm.add_custom_button(__('Request Parts'), function() {
+                            //Check if the form matches the saved document
+                            if (frm.is_dirty()) {
+                                frappe.msgprint({
+                                    title: __('Unsaved Changes'),
+                                    indicator: 'orange',
+                                    message: __('Please save the document before processing, as there are unsaved changes.')
+                                });
+                                return; // Stop the execution
+                            }
                             if (!frm.doc.required_parts || frm.doc.required_parts.length === 0) {
                                 frappe.msgprint(__("Please add items to the 'Required Parts' table first."));
                                 return;
@@ -115,6 +133,7 @@ frappe.ui.form.on("Repair Request", {
                                 frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
                                 return;
                             }
+
                             frappe.call({
                                 method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.request_parts_from_warehouse",
                                 args: { 
@@ -127,6 +146,15 @@ frappe.ui.form.on("Repair Request", {
                     else if (frm.doc.resolution === 'Swap') {
                         // Button to request swap approval from brand manager
                         frm.add_custom_button(__('Request Swap Approval'), function() {
+                            //Check if the form matches the saved document
+                            if (frm.is_dirty()) {
+                                frappe.msgprint({
+                                    title: __('Unsaved Changes'),
+                                    indicator: 'orange',
+                                    message: __('Please save the document before processing, as there are unsaved changes.')
+                                });
+                                return; // Stop the execution
+                            }                            
                             if (!frm.doc.fault_category && !frm.doc.fault_description) {
                                 frappe.msgprint(__("Please provide Fault Category and Description before requesting swap approval."));
                                 return;
@@ -138,11 +166,20 @@ frappe.ui.form.on("Repair Request", {
                                 },
                                 callback: () => frm.reload_doc()
                             });
-                        }).addClass('btn-primary');
+                        }).addClass('btn-warning');
                     }
                     else {
                         // Button to complete without parts
                         frm.add_custom_button(__('Complete Repair No Parts'), function() {
+                            //Check if the form matches the saved document
+                            if (frm.is_dirty()) {
+                                frappe.msgprint({
+                                    title: __('Unsaved Changes'),
+                                    indicator: 'orange',
+                                    message: __('Please save the document before processing, as there are unsaved changes.')
+                                });
+                                return; // Stop the execution
+                            }                            
                             if (!frm.doc.fault_category && !frm.doc.fault_description) {
                                 frappe.msgprint(__("Please provide Fault Category and Description before requesting parts ."));
                                 return;
@@ -175,6 +212,15 @@ frappe.ui.form.on("Repair Request", {
                             
                             // Add Approve Swap Button
                             frm.add_custom_button(__('Approve Swap'), function() {
+                            //Check if the form matches the saved document
+                                if (frm.is_dirty()) {
+                                    frappe.msgprint({
+                                        title: __('Unsaved Changes'),
+                                        indicator: 'orange',
+                                        message: __('Please save the document before processing, as there are unsaved changes.')
+                                    });
+                                    return; // Stop the execution
+                                }
                                 frappe.confirm(__('Are you sure you want to APPROVE this swap request?'), function() {
                                     frappe.call({
                                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.approve_swap",
@@ -186,6 +232,15 @@ frappe.ui.form.on("Repair Request", {
 
                             // Add Reject Swap Button
                             frm.add_custom_button(__('Reject Swap'), function() {
+                            //Check if the form matches the saved document
+                            if (frm.is_dirty()) {
+                                frappe.msgprint({
+                                    title: __('Unsaved Changes'),
+                                    indicator: 'orange',
+                                    message: __('Please save the document before processing, as there are unsaved changes.')
+                                });
+                                return; // Stop the execution
+                            }                                
                                 frappe.prompt([
                                     {
                                         label: __('Reason for Rejection'),
@@ -214,6 +269,15 @@ frappe.ui.form.on("Repair Request", {
             if (frm.doc.status === 'Pending Parts Allocation' && (frappe.user.has_role('Service Center Warehouse Manager') || frappe.user.has_role('SC Manager')) ) {
                 // Button to create Stock Entry (Material Transfer)
                 frm.add_custom_button(__('Allocate Parts'), function() {
+                    //Check if the form matches the saved document
+                    if (frm.is_dirty()) {
+                        frappe.msgprint({
+                            title: __('Unsaved Changes'),
+                            indicator: 'orange',
+                            message: __('Please save the document before processing, as there are unsaved changes.')
+                        });
+                        return; // Stop the execution
+                    }
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.create_stock_transfer",
                         args: { 
@@ -225,6 +289,15 @@ frappe.ui.form.on("Repair Request", {
                 
                 // Button to mark as pending from main warehouse
                 frm.add_custom_button(__('Mark Pending'), function() {
+                        //Check if the form matches the saved document
+                    if (frm.is_dirty()) {
+                        frappe.msgprint({
+                            title: __('Unsaved Changes'),
+                            indicator: 'orange',
+                            message: __('Please save the document before processing, as there are unsaved changes.')
+                        });
+                        return; // Stop the execution
+                    }
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.mark_pending_from_main",
                         args: { 
@@ -241,6 +314,15 @@ frappe.ui.form.on("Repair Request", {
             if (frm.doc.status === 'Pending for Spare Parts' && (frappe.user.has_role('Service Center Warehouse Manager') || frappe.user.has_role('SC Manager')) ) {
                 // Button to mark as pending from main warehouse
                 frm.add_custom_button(__('Spare Parts Received'), function() {
+                        //Check if the form matches the saved document
+                    if (frm.is_dirty()) {
+                        frappe.msgprint({
+                            title: __('Unsaved Changes'),
+                            indicator: 'orange',
+                            message: __('Please save the document before processing, as there are unsaved changes.')
+                        });
+                        return; // Stop the execution
+                    }
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.mark_spart_parts_received",
                         args: { 
@@ -257,6 +339,15 @@ frappe.ui.form.on("Repair Request", {
             if (frm.doc.status === 'Parts Allocated' && (frappe.user.has_role('Technician') || frappe.user.has_role('SC Manager')) ) {
                  if (frm.doc.assigned_technician === frappe.session.user || frappe.user.has_role('SC Manager')) {
                      frm.add_custom_button(__('Complete Repair'), function() {
+                        //Check if the form matches the saved document
+                        if (frm.is_dirty()) {
+                            frappe.msgprint({
+                                title: __('Unsaved Changes'),
+                                indicator: 'orange',
+                                message: __('Please save the document before processing, as there are unsaved changes.')
+                            });
+                            return; // Stop the execution
+                        }                        
                         frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.complete_repair",
                         args: { 
@@ -272,6 +363,15 @@ frappe.ui.form.on("Repair Request", {
             // =================================================================
             if (frm.doc.status === 'Repaired' && frm.doc.repair_type !== 'In Warranty' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
                  frm.add_custom_button(__('Receive Payment'), function() {
+                    //Check if the form matches the saved document
+                    if (frm.is_dirty()) {
+                        frappe.msgprint({
+                            title: __('Unsaved Changes'),
+                            indicator: 'orange',
+                            message: __('Please save the document before processing, as there are unsaved changes.')
+                        });
+                        return; // Stop the execution
+                    }
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.recieve_payment",
                         args: { 
@@ -295,6 +395,15 @@ frappe.ui.form.on("Repair Request", {
             // =================================================================
             if ((frm.doc.repair_type === 'In Warranty' && (frm.doc.status === "Repaired" || frm.doc.status === "Swap Approved")) || (frm.doc.status === 'Paid' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager')))) {
                  frm.add_custom_button(__('Deliver to Customer'), function() {
+                    //Check if the form matches the saved document
+                    if (frm.is_dirty()) {
+                        frappe.msgprint({
+                            title: __('Unsaved Changes'),
+                            indicator: 'orange',
+                            message: __('Please save the document before processing, as there are unsaved changes.')
+                        });
+                        return; // Stop the execution
+                    }                    
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.deliver_to_customer",
                         args: { 
