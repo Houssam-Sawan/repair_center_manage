@@ -142,16 +142,20 @@ frappe.ui.form.on("Repair Request", {
                     }
                     else {
                         // Button to complete without parts
-                        frm.add_custom_button(__('Complete Repair'), function() {
+                        frm.add_custom_button(__('Complete Repair No Parts'), function() {
                             if (!frm.doc.fault_category && !frm.doc.fault_description) {
-                                frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
+                                frappe.msgprint(__("Please provide Fault Category and Description before requesting parts ."));
                                 return;
                             }
-                            //  Clear the Spare Parts table
-                            frm.clear_table("required_parts");
-                            frm.refresh_field("required_parts");
-                            frm.set_value('status', 'Repaired');
-                            frm.save();
+
+                            frappe.call({
+                                method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.complete_repair_without_parts",
+                                args: { 
+                                    docname: frm.doc.name 
+                            },
+                                callback: () => frm.reload_doc()
+                            });
+
                         }).addClass('btn-success');
                     }
                 }
