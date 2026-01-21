@@ -1,6 +1,7 @@
 # Copyright (c) 2025, Houssam Sawan and contributors
 # For license information, please see license.txt
 
+from annotated_types import doc
 import frappe
 from frappe import _, msgprint, throw
 from frappe.utils import get_link_to_form
@@ -619,6 +620,32 @@ def complete_repair(docname):
 	# Update status on Repair Request
 	doc.status = "Repaired"
 	doc.add_log_entry(f"Repair marked as 'Repaired' by {frappe.session.user}.")
+	doc.save()
+
+
+@frappe.whitelist()
+def complete_repair_without_parts(docname):
+	"""
+	Mark repair as 'Repaired' without parts replacement.
+	Called from 'Complete Repair without Parts' button.
+	"""
+	doc = frappe.get_doc("Repair Request", docname)
+
+	if doc.status != "Parts Allocated" and doc.resolution == "Parts Replacement":
+		frappe.throw("Can only allocate parts when status is 'Parts Allocated'.")
+	
+
+	if doc.status != "In Progress":
+		frappe.throw("Can only complete repair when status is 'In Progress'.")
+
+	#doc.restrict_edits()  # Ensure no edits are made before completing repair
+	# Update status on Repair Request
+	doc.status = "Repaired"
+	if doc.resolution != "Parts replacement":
+    	# This clears all rows in the child table if not parts are needed
+		doc.set("required_parts", [])
+    	
+	doc.add_log_entry(f"Repair marked as 'Repaired' without parts by {frappe.session.user}.")
 	doc.save()
 
 #request_swap_approval: Request Swap approval from Brand manager
