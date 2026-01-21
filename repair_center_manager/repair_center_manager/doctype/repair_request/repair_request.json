@@ -220,7 +220,8 @@
   {
    "fieldname": "condition_photo",
    "fieldtype": "Attach",
-   "label": "Condition Photo"
+   "label": "Condition Photo",
+   "mandatory_depends_on": "eval:doc.resolution == 'Swap'"
   },
   {
    "fieldname": "tab_2_tab",
@@ -476,7 +477,7 @@
    "fieldname": "new_imei",
    "fieldtype": "Data",
    "label": "New IMEI",
-   "mandatory_depends_on": "eval:doc.resolution == 'Swap'"
+   "mandatory_depends_on": "eval:doc.resolution == 'Swap' && eval:doc.status == 'Swap Approved'"
   },
   {
    "fieldname": "section_break_njur",
@@ -523,7 +524,7 @@
    "link_fieldname": "custom_repair_request"
   }
  ],
- "modified": "2026-01-20 07:38:20.754529",
+ "modified": "2026-01-21 15:03:20.791425",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
