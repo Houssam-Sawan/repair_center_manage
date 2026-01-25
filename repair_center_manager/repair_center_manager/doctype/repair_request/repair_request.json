@@ -477,7 +477,7 @@
    "fieldname": "new_imei",
    "fieldtype": "Data",
    "label": "New IMEI",
-   "mandatory_depends_on": "eval:doc.resolution == 'Swap' && eval:doc.status == 'Swap Approved'"
+   "mandatory_depends_on": "eval:doc.resolution == 'Swap' && doc.status == 'Swap Approved'"
   },
   {
    "fieldname": "section_break_njur",
@@ -524,7 +524,7 @@
    "link_fieldname": "custom_repair_request"
   }
  ],
- "modified": "2026-01-21 15:03:20.791425",
+ "modified": "2026-01-25 16:09:50.063077",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
