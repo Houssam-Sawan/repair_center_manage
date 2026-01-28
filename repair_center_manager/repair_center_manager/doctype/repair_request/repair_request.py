@@ -144,10 +144,12 @@ class RepairRequest(Document):
 		# IMEI/Serial Number validation
 		if len(self.serial_no) < 11 and self.serial_no != "NA":
 			frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters or 'NA'."))
-
+		
 		# New IMEI/Serial Number validation for swapped devices
-		if  self.resolution == "Swap" and len(self.new_imei) < 11 :
-			frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters."))
+		if self.new_imei:
+			if  self.resolution == "Swap" and self.status == "Swap Approved" and len(self.new_imei) < 11 :
+				frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters."))
+				
 	def restrict_edits(self):
 		
 		if self.status in ["Pending Parts Allocation", "Parts Allocated", "Repaired", "Delivered", "Pending for Spare Parts"]:
@@ -547,7 +549,7 @@ def create_stock_transfer(docname):
 	# Create the Stock Entry
 	se = frappe.new_doc("Stock Entry")
 	se.stock_entry_type = "Material Transfer"
-	se.set("purpose", "Material Transfer") # ERPNext 14+
+	se.set("purpose", "Material Transfer") #  ERPNext 14+
 	se.from_warehouse = sc_details.store_warehouse
 	se.to_warehouse = sc_details.wip_warehouse
 	se.custom_repair_request = doc.name # Link it back
