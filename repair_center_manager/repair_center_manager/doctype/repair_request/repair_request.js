@@ -129,7 +129,7 @@ frappe.ui.form.on("Repair Request", {
                                 frappe.msgprint(__("Please add items to the 'Required Parts' table first."));
                                 return;
                             }
-                            if (!frm.doc.fault_category && !frm.doc.fault_description) {
+                            if (!frm.doc.fault_category || !frm.doc.fault_description) {
                                 frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
                                 return;
                             }
@@ -155,7 +155,7 @@ frappe.ui.form.on("Repair Request", {
                                 });
                                 return; // Stop the execution
                             }                            
-                            if (!frm.doc.fault_category && !frm.doc.fault_description) {
+                            if (!frm.doc.fault_category || !frm.doc.fault_description) {
                                 frappe.msgprint(__("Please provide Fault Category and Description before requesting swap approval."));
                                 return;
                             }
@@ -180,7 +180,7 @@ frappe.ui.form.on("Repair Request", {
                                 });
                                 return; // Stop the execution
                             }                            
-                            if (!frm.doc.fault_category && !frm.doc.fault_description) {
+                            if (!frm.doc.fault_category || !frm.doc.fault_description) {
                                 frappe.msgprint(__("Please provide Fault Category and Description before requesting parts ."));
                                 return;
                             }
@@ -393,7 +393,7 @@ frappe.ui.form.on("Repair Request", {
                         // =================================================================
             // == STATUS: Paid (Receptionist Action: DELIVER) ==
             // =================================================================
-            if ((frm.doc.repair_type === 'In Warranty' && (frm.doc.status === "Repaired" || frm.doc.status === "Swap Approved")) || (frm.doc.status === 'Paid' && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager')))) {
+            if (((frm.doc.repair_type === 'In Warranty' && (frm.doc.status === "Repaired" || frm.doc.status === "Swap Approved")) || (frm.doc.status === 'Paid' || frm.doc.status === "Swap Approved")) && (frappe.user.has_role('Receptionist') || frappe.user.has_role('SC Manager'))) {
                  frm.add_custom_button(__('Deliver to Customer'), function() {
                     //Check if the form matches the saved document
                     if (frm.is_dirty()) {
