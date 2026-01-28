@@ -14,99 +14,7 @@ from frappe.desk.doctype.notification_log.notification_log import (
 
 
 class RepairRequest(Document):
-	# who can edit what in each workflow status
-	EDIT_RULES = {
-		"Technician": {
-			"In Progress": ["required_parts", "fault_category", "fault_description", "repair_notes"],
-			"Parts Allocated": [],
-			"Pending Parts Allocation": [],
-		},
-		"Receptionist": {
-			"Pending Parts Allocation": ["approval_comment"],
-		},
-		"Service Center Warehouse Managerr": {
-			"Pending Parts Allocation": ["approval_comment"],
-			"Parts Allocated": ["custom_notes"],
-		},
-		"SC Manager": {
-			"Pending Parts Allocation": ["approval_comment"],
-			"Parts Allocated": ["custom_notes"],
-		},
-		"Administrator": "__all__",  # can edit anything
-	}
-
-	def restrict_edits_role(self):
-		"""Restrict edits based on workflow status and role-based field permissions."""
-        # Skip check for new documents
-		if self.is_new():
-			return
-
-        # Get user roles and workflow status
-		user_roles = frappe.get_roles(frappe.session.user)
-		status = self.status
-
-        # Superuser bypass
-		if frappe.session.user == "Administrator":
-			return
-
-        # Get old document for comparison
-		old_doc = frappe.get_doc(self.doctype, self.name)
-		changed_fields = []
-
-        # Determine editable fields for this role and status
-		editable_fields = []
-		for role in user_roles:
-			rules = self.EDIT_RULES.get(role)
-			if not rules:
-				continue
-			if rules == "__all__":
-				return  # full access
-			if status in rules:
-				editable_fields.extend(rules[status])
-
-        # If no rule matches → block all edits
-		if not editable_fields:
-			editable_fields = []
-
-		for field in self.meta.fields:
-            # Skip automatically updated or system fields
-			if field.fieldname in ("modified", "modified_by", "owner", "creation", "idx"):
-				continue
-
-            # Skip read-only or hidden fields (UI restrictions)
-			if field.read_only or field.hidden:
-				continue
-
-            # Handle normal fields
-			if field.fieldtype != "Table":
-				old_value = old_doc.get(field.fieldname)
-				new_value = self.get(field.fieldname)
-				if old_value != new_value and field.fieldname not in editable_fields:
-					changed_fields.append(field.label or field.fieldname)
-			else:
-                # Handle child tables
-				for d_new in self.get(field.fieldname) or []:
-					if not d_new.name:
-						continue  # skip new rows (if not allowed, you can block instead)
-					d_old = frappe.get_doc(d_new.doctype, d_new.name)
-					child_meta = frappe.get_meta(d_new.doctype)
-					for cfield in child_meta.fields:
-						if cfield.fieldname in ("modified", "owner", "idx"):
-							continue
-						old_value = d_old.get(cfield.fieldname)
-						new_value = d_new.get(cfield.fieldname)
-						if old_value != new_value and field.fieldname not in editable_fields:
-							changed_fields.append(f"{field.label} → {cfield.label}")
-
-        # If any restricted fields changed → throw error
-		if changed_fields:
-			frappe.throw(
-                f"You cannot modify this document in state <b>{status}</b>.<br>"
-                f"Changed fields: {', '.join(changed_fields)}",
-                title="Edit Restricted"
-            )
-			
-
+	
 	def validate(self):
 		self.Validate_sn()
 		self.log_status_change()
@@ -315,6 +223,104 @@ class RepairRequest(Document):
 		notification.email_sent = 1
 		notification.insert(ignore_permissions=True)
 		frappe.db.commit() # Notifications need explicit commit
+
+
+
+	def restrict_edits_role(self):
+		# -------------------------------------------------
+		# Basic guards
+		# -------------------------------------------------
+		if self.is_new():
+			return
+
+		user = frappe.session.user
+		if user == "Administrator":
+			return
+
+		rules = get_edit_control_rules()
+		status = self.status
+		roles = set(frappe.get_roles(user))
+
+		# -------------------------------------------------
+		# 1️⃣ Fully locked status
+		# -------------------------------------------------
+		if status in rules["locked"]:
+			frappe.throw(
+				f"Document is locked in state <b>{status}</b>."
+			)
+
+		# -------------------------------------------------
+		# 2️⃣ Full access role
+		# -------------------------------------------------
+		if roles & rules["full_access"].get(status, set()):
+			return
+
+		old = frappe.get_doc(self.doctype, self.name)
+		meta = self.meta
+		field_tab_map = get_field_tab_map(meta)
+
+		skipped_parent = rules["skipped"]["parent"]
+		skipped_child = rules["skipped"]["child"]
+
+		# -------------------------------------------------
+		# 3️⃣ Aggregate allowed permissions
+		# -------------------------------------------------
+		allowed_tabs = set()
+		allowed_fields = set()
+		allowed_child_fields = {}
+
+		for role in roles:
+			allowed_tabs |= rules["tabs"].get(status, {}).get(role, set())
+			allowed_fields |= rules["fields"].get(status, {}).get(role, set())
+
+			for parent, fields in rules["child_fields"].get(status, {}).get(role, {}).items():
+				allowed_child_fields.setdefault(parent, set()).update(fields)
+
+		# -------------------------------------------------
+		# 4️⃣ Validate parent fields
+		# -------------------------------------------------
+		for field in meta.fields:
+			fname = field.fieldname
+
+			# Skip layout / system
+			if field.fieldtype in ("Section Break", "Column Break"):
+				continue
+
+			if fname in skipped_parent:
+				continue
+
+			# -------------------------------------------------
+			# Normal fields
+			# -------------------------------------------------
+			if field.fieldtype != "Table":
+				if old.get(fname) != self.get(fname):
+					tab = field_tab_map.get(fname)
+
+					if (
+						fname in allowed_fields or
+						(tab and tab in allowed_tabs)
+					):
+						continue
+
+					frappe.throw(
+						f"You cannot modify <b>{field.label}</b> "
+						f"in state <b>{status}</b>."
+					)
+
+			# -------------------------------------------------
+			# Child tables
+			# -------------------------------------------------
+			else:
+				validate_child_table(
+					self=self,
+					old=old,
+					table_field=field,
+					allowed_child_fields=allowed_child_fields,
+					skipped_child=skipped_child,
+					allowed_tabs=allowed_tabs,
+					field_tab_map=field_tab_map,
+					status=status
+				)
 
 # --- Whitelisted Functions (Callable from Client) ---
 
@@ -826,3 +832,158 @@ def deliver_to_customer(docname):
 	frappe.msgprint(_("Device marked as 'Delivered'."), alert=True)
 
 
+@frappe.whitelist()
+#@frappe.cache()
+def get_edit_control_rules():
+    settings = frappe.get_single("Document Edit Control Settings")
+
+    rules = {
+        "locked": set(),
+        "full_access": {},
+        "tabs": {},
+        "fields": {},
+        "child_fields": {},
+        "skipped": {
+            "parent": set(),
+            "child": {}
+        }
+    }
+
+    for r in settings.status_lock_rules:
+        if r.fully_locked:
+            rules["locked"].add(r.status)
+
+    for r in settings.full_access_role_rules:
+        rules["full_access"].setdefault(r.status, set()).add(r.role)
+
+    for r in settings.tab_edit_rules:
+        rules["tabs"].setdefault(r.status, {}).setdefault(r.role, set()).add(r.section_break)
+
+    for r in settings.field_edit_rules:
+        rules["fields"].setdefault(r.status, {}).setdefault(r.role, set()).add(r.fieldname)
+
+    for r in settings.child_field_edit_rules:
+        rules["child_fields"]\
+            .setdefault(r.status, {})\
+            .setdefault(r.role, {})\
+            .setdefault(r.parent_fieldname, set())\
+            .add(r.child_fieldname)
+
+    for r in settings.skipped_fields:
+        if r.is_child:
+            rules["skipped"]["child"]\
+                .setdefault(r.parent_fieldname, set())\
+                .add(r.fieldname)
+        else:
+            rules["skipped"]["parent"].add(r.fieldname)
+
+    return rules
+
+
+@frappe.whitelist()
+def validate_child_table(
+    self,
+    old,
+    table_field,
+    allowed_child_fields,
+    skipped_child,
+    allowed_tabs,
+    field_tab_map,
+    status
+):
+    parent_field = table_field.fieldname
+    tab = field_tab_map.get(parent_field)
+
+    # Allow entire table via tab permission
+    if tab and tab in allowed_tabs:
+        return
+
+    old_rows = {r.name: r for r in old.get(parent_field) or []}
+
+    for row in self.get(parent_field) or []:
+        old_row = old_rows.get(row.name)
+
+        # Block row add/remove unless explicitly allowed
+        if not old_row:
+            frappe.throw(
+                f"Adding rows to <b>{table_field.label}</b> "
+                f"is not allowed in state <b>{status}</b>."
+            )
+
+        meta = frappe.get_meta(row.doctype)
+
+        for f in meta.fields:
+            cf = f.fieldname
+
+            if f.fieldtype in ("Section Break", "Column Break"):
+                continue
+
+            if cf in skipped_child.get(parent_field, set()):
+                continue
+
+            if old_row.get(cf) != row.get(cf):
+                if cf in allowed_child_fields.get(parent_field, set()):
+                    continue
+
+                frappe.throw(
+                    f"You cannot modify <b>{table_field.label} → {f.label}</b> "
+                    f"in state <b>{status}</b>."
+                )
+
+
+@frappe.whitelist()
+def get_field_tab_map(meta):
+    """
+    Returns:
+    {
+        fieldname: tab_fieldname
+    }
+    """
+    tab_map = {}
+    current_tab = None
+
+    for field in meta.fields:
+        if field.fieldtype == "Section Break":
+            current_tab = field.fieldname
+        elif field.fieldtype not in ("Column Break"):
+            tab_map[field.fieldname] = current_tab
+
+    return tab_map
+
+
+@frappe.whitelist()
+def get_client_edit_matrix(doctype, docname):
+    doc = frappe.get_doc(doctype, docname)
+    user = frappe.session.user
+
+    if user == "Administrator":
+        return {"full_access": True}
+
+    rules = get_edit_control_rules()
+    status = doc.status
+    roles = set(frappe.get_roles(user))
+
+    if status in rules["locked"]:
+        return {"locked": True}
+
+    if roles & rules["full_access"].get(status, set()):
+        return {"full_access": True}
+
+    # Aggregate permissions (same logic as validator)
+    allowed_tabs = set()
+    allowed_fields = set()
+    allowed_child_fields = {}
+
+    for role in roles:
+        allowed_tabs |= rules["tabs"].get(status, {}).get(role, set())
+        allowed_fields |= rules["fields"].get(status, {}).get(role, set())
+        for parent, fields in rules["child_fields"].get(status, {}).get(role, {}).items():
+            allowed_child_fields.setdefault(parent, set()).update(fields)
+
+    return {
+        "allowed_tabs": list(allowed_tabs),
+        "allowed_fields": list(allowed_fields),
+        "allowed_child_fields": {
+            k: list(v) for k, v in allowed_child_fields.items()
+        }
+    }

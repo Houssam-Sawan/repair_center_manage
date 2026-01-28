@@ -34,13 +34,11 @@ frappe.ui.form.on("Repair Request", {
     resolution: function(frm, cdt, cdn) {
         calculate_labor_charge(frm);
     },
-
-	    /**
-     * Onload: Set filters
-     */
     onload: function(frm) {
-
-
+        apply_readonly_mirror(frm);
+    },    
+    status: function(frm) {
+        apply_readonly_mirror(frm);
     },
  	refresh: function(frm) {
 
@@ -50,7 +48,7 @@ frappe.ui.form.on("Repair Request", {
         }).addClass('btn-secondary');
  */
         frm.set_intro("");
-
+        apply_readonly_mirror(frm);
 
         // Filter for assigned_technician
         // Only show users who are 'Technician' role AND are linked to the selected Service Center 
@@ -658,4 +656,55 @@ function calculate_labor_charge(frm) {
     frm.set_value('profit', labor_charge + total - total_cost);
     refresh_field('profit');
     refresh_field('labor_charge');
+}
+
+function apply_readonly_mirror(frm) {
+    if (frm.is_new()) return;
+
+    frappe.call({
+        method: "your_app.path.get_client_edit_matrix",
+        args: {
+            doctype: frm.doctype,
+            docname: frm.doc.name
+        },
+        callback(r) {
+            if (!r.message) return;
+
+            const m = r.message;
+
+            // 🔒 Fully locked
+            if (m.locked) {
+                frm.set_read_only();
+                return;
+            }
+
+            // 👑 Full access
+            if (m.full_access) {
+                frm.set_read_only(false);
+                return;
+            }
+
+            // Default: everything readonly
+            frm.set_read_only();
+
+            // 🗂 Enable tabs
+            (m.allowed_tabs || []).forEach(tab => {
+                frm.toggle_enable(tab, true);
+            });
+
+            // 🧾 Enable parent fields
+            (m.allowed_fields || []).forEach(f => {
+                frm.toggle_enable(f, true);
+            });
+
+            // 📋 Enable child fields
+            Object.entries(m.allowed_child_fields || {}).forEach(
+                ([parent, fields]) => {
+                    fields.forEach(f => {
+                        frm.fields_dict[parent]?.grid.toggle_enable(f, true);
+                    });
+                }
+            );
+        }
+    });
 }

@@ -284,6 +284,7 @@
   {
    "fieldname": "internal_log_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Internal Log"
   },
   {
@@ -524,7 +525,7 @@
    "link_fieldname": "custom_repair_request"
   }
  ],
- "modified": "2026-01-25 16:09:50.063077",
+ "modified": "2026-01-28 12:31:24.323013",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
