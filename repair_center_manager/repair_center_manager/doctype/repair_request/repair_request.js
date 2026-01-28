@@ -33,28 +33,27 @@ frappe.ui.form.on("Repair Request", {
 
     resolution: function(frm, cdt, cdn) {
         calculate_labor_charge(frm);
-    },
-    onload: function(frm) {
-        apply_readonly_mirror(frm);
-    },    
+    },   
     status: function(frm) {
-        apply_readonly_mirror(frm);
+        //apply_permissions_mirror(frm);
     },
     onload: function(frm) {
         frm.set_df_property('repair_request_material', 'read_only', 1);
+        //apply_permissions_mirror(frm);
+        console.log("Onload called");
     },
  	refresh: function(frm) {
 
         let table = frm.fields_dict['repair_request_material'];
         if (table?.grid?.wrapper) {
-            table.grid.wrapper.find('.grid-add-row').hide();
+            table.grid.wrapper.find('.grid-add-row').hide() ;
         }
 /*         frm.add_custom_button(__('Test Button'), function() {
             test_button();
         }).addClass('btn-secondary');
  */
         frm.set_intro("");
-        apply_readonly_mirror(frm);
+        apply_permissions_mirror(frm);
 
         // Filter for assigned_technician
         // Only show users who are 'Technician' role AND are linked to the selected Service Center 
@@ -664,7 +663,8 @@ function calculate_labor_charge(frm) {
     refresh_field('labor_charge');
 }
 
-function apply_readonly_mirror(frm) {
+
+function apply_permissions_mirror(frm) {
     if (frm.is_new()) return;
 
     frappe.call({
@@ -675,70 +675,25 @@ function apply_readonly_mirror(frm) {
         },
         callback(r) {
             if (!r.message) return;
+            const perms = r.message;
+            console.log("Edit Permissions Mirror:");
+            console.log(perms);
 
-            const m = r.message;
-            console.log(m);
-            // 🔒 Fully locked
-            if (m.locked) {
-                frm.disable_save();
-                lock_all_fields(frm);
-                return;
+            // Enable the form first to keep Save button visible
+            //frm.set_read_only(false);
+
+                // --- 1️⃣ Apply locking ---
+            if (perms.locked) {
+               // lock_all_fields(frm);
+            } else {
+                let fields_to_lock = frm.meta.fields
+                    .map(f => f.fieldname)
+                    .filter(name => !perms.allowed_fields.includes(name));
+                
+                frm.toggle_enable(fields_to_lock, false);
             }
+            
 
-            // 👑 Full access
-            if (m.full_access) {
-               // frm.set_read_only(false);
-                return;
-            }
-
-            lock_all_fields(frm);
-            // Default: everything readonly
-            //frm.set_read_only();
-
-            // 🗂 Enable tabs
-            (m.allowed_tabs || []).forEach(tab => {
-                frm.toggle_enable(tab, true);
-            });
-
-            // 🧾 Enable parent fields
-            (m.allowed_fields || []).forEach(f => {
-                frm.toggle_enable(f, true);
-            });
-
-            // 📋 Enable child fields
-            Object.entries(m.allowed_child_fields || {}).forEach(
-                ([parent, fields]) => {
-                    fields.forEach(f => {
-                        frm.fields_dict[parent]?.grid.toggle_enable(f, true);
-                    });
-                }
-            );
-        }
-    });
-}
-
-
-function lock_all_fields(frm) {
-    // Parent fields
-    frm.meta.fields.forEach(f => {
-        if (f.fieldtype === "Section Break" || f.fieldtype === "Column Break") return;
-        frm.toggle_enable(f.fieldname, false);
-    });
-
-    // Child tables
-    Object.values(frm.fields_dict || {}).forEach(df => {
-        if (df?.df?.fieldtype === "Table" && df.grid?.wrapper) {
-            // Disable adding new rows
-            df.grid.wrapper.find('.grid-add-row').hide();
-
-            // Make each row read-only safely
-            df.grid.grid_rows.forEach(row => {
-                row.doc.__unsaved = false; // optional
-                row.toggle_enable(false);
-            });
-
-            // Optionally mark the whole field read-only
-            df.df.read_only = 1;
         }
     });
 }

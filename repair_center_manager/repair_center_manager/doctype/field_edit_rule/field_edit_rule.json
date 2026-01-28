@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "status",
-  "role"
+  "role",
+  "fieldname"
  ],
  "fields": [
   {
@@ -27,13 +28,20 @@
    "label": "Role",
    "options": "Role",
    "reqd": 1
+  },
+  {
+   "fieldname": "fieldname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Field Name",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-28 13:02:11.468362",
+ "modified": "2026-01-28 15:51:30.126736",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Field Edit Rule",
