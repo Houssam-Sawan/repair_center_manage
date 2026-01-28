@@ -40,9 +40,15 @@ frappe.ui.form.on("Repair Request", {
     status: function(frm) {
         apply_readonly_mirror(frm);
     },
+    onload: function(frm) {
+        frm.set_df_property('repair_request_material', 'read_only', 1);
+    },
  	refresh: function(frm) {
 
-        
+        let table = frm.fields_dict['repair_request_material'];
+        if (table?.grid?.wrapper) {
+            table.grid.wrapper.find('.grid-add-row').hide();
+        }
 /*         frm.add_custom_button(__('Test Button'), function() {
             test_button();
         }).addClass('btn-secondary');
@@ -662,7 +668,7 @@ function apply_readonly_mirror(frm) {
     if (frm.is_new()) return;
 
     frappe.call({
-        method: "your_app.path.get_client_edit_matrix",
+        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.get_client_edit_matrix",
         args: {
             doctype: frm.doctype,
             docname: frm.doc.name
@@ -671,21 +677,23 @@ function apply_readonly_mirror(frm) {
             if (!r.message) return;
 
             const m = r.message;
-
+            console.log(m);
             // 🔒 Fully locked
             if (m.locked) {
-                frm.set_read_only();
+                frm.disable_save();
+                lock_all_fields(frm);
                 return;
             }
 
             // 👑 Full access
             if (m.full_access) {
-                frm.set_read_only(false);
+               // frm.set_read_only(false);
                 return;
             }
 
+            lock_all_fields(frm);
             // Default: everything readonly
-            frm.set_read_only();
+            //frm.set_read_only();
 
             // 🗂 Enable tabs
             (m.allowed_tabs || []).forEach(tab => {
@@ -705,6 +713,32 @@ function apply_readonly_mirror(frm) {
                     });
                 }
             );
+        }
+    });
+}
+
+
+function lock_all_fields(frm) {
+    // Parent fields
+    frm.meta.fields.forEach(f => {
+        if (f.fieldtype === "Section Break" || f.fieldtype === "Column Break") return;
+        frm.toggle_enable(f.fieldname, false);
+    });
+
+    // Child tables
+    Object.values(frm.fields_dict || {}).forEach(df => {
+        if (df?.df?.fieldtype === "Table" && df.grid?.wrapper) {
+            // Disable adding new rows
+            df.grid.wrapper.find('.grid-add-row').hide();
+
+            // Make each row read-only safely
+            df.grid.grid_rows.forEach(row => {
+                row.doc.__unsaved = false; // optional
+                row.toggle_enable(false);
+            });
+
+            // Optionally mark the whole field read-only
+            df.df.read_only = 1;
         }
     });
 }

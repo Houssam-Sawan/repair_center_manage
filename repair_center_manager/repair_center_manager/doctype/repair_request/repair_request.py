@@ -238,6 +238,7 @@ class RepairRequest(Document):
 			return
 
 		rules = get_edit_control_rules()
+		frappe.console.log(rules)
 		status = self.status
 		roles = set(frappe.get_roles(user))
 

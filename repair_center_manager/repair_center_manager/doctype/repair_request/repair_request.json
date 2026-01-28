@@ -8,6 +8,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "details_tab",
   "service_center",
   "repair_type",
   "column_break_puhp",
@@ -503,6 +504,11 @@
    "label": "Labor Charge USD",
    "options": "USD",
    "read_only": 1
+  },
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
   }
  ],
  "grid_page_length": 50,
@@ -525,7 +531,7 @@
    "link_fieldname": "custom_repair_request"
   }
  ],
- "modified": "2026-01-28 12:31:24.323013",
+ "modified": "2026-01-28 13:45:18.535945",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
