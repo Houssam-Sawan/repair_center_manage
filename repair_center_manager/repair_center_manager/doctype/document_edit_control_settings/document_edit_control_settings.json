@@ -33,6 +33,7 @@
    "options": "Tab Edit Rule"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "field_edit_rules",
    "fieldtype": "Table",
    "label": "Field Edit Rules",
@@ -61,7 +62,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-28 13:00:16.262010",
+ "modified": "2026-01-29 15:18:05.413844",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Document Edit Control Settings",

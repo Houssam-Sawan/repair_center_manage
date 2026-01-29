@@ -665,7 +665,16 @@ function calculate_labor_charge(frm) {
 
 
 function apply_permissions_mirror(frm) {
-    if (frm.is_new()) return;
+  
+
+    if (frm.is_new()){
+        console.log("New document - skipping permissions mirror");
+        let filtered_fields = get_fields_between_two_fields(frm.meta.fields.map(f => f.fieldname), 'tab_2_tab', 'notes_tab');
+        frm.toggle_enable(filtered_fields, false);
+        console.log("Locked fields on new document:");
+        console.log(filtered_fields);
+        return;
+    } 
 
     frappe.call({
         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.get_client_edit_matrix",
@@ -682,13 +691,12 @@ function apply_permissions_mirror(frm) {
             // Enable the form first to keep Save button visible
             //frm.set_read_only(false);
 
-                // --- 1️⃣ Apply locking ---
+            // --- 1️⃣ Apply locking ---
             if (perms.locked) {
                // lock_all_fields(frm);
+               frm.toggle_enable(all_fields, false);
             } else {
-                let fields_to_lock = frm.meta.fields
-                    .map(f => f.fieldname)
-                    .filter(name => !perms.allowed_fields.includes(name));
+                let fields_to_lock = frm.meta.fields.map(f => f.fieldname).filter(name => !perms.allowed_fields.includes(name));
                 
                 frm.toggle_enable(fields_to_lock, false);
             }
@@ -696,4 +704,19 @@ function apply_permissions_mirror(frm) {
 
         }
     });
+}
+
+
+//let all_fields = frm.meta.fields.map(f => f.fieldname);
+
+function get_fields_between_two_fields(all_fields, start_field, end_field) {
+    let fields = all_fields;
+    let start_index = fields.indexOf(start_field);
+    let end_index = fields.indexOf(end_field);
+
+    if (start_index === -1 || end_index === -1 || start_index >= end_index) {
+        return [];
+    }
+
+    return fields.slice(start_index, end_index );
 }
