@@ -6,6 +6,9 @@ frappe.ui.form.on("Repair Request", {
     required_parts_delete: function(frm){
         calculate_totals(frm);
     },
+    service_charge: function(frm) {
+        calculate_totals(frm);
+    },
     
     brand: function(frm, cdt, cdn) {
         frm.set_value('device_model', null);
@@ -70,8 +73,9 @@ frappe.ui.form.on("Repair Request", {
     onload: function(frm) {
         frm.set_df_property('repair_request_material', 'read_only', 1);
         //apply_permissions_mirror(frm);
-        console.log("Onload called");
+        //console.log("Onload called");
     },
+
  	refresh: function(frm) {
 
         let table = frm.fields_dict['repair_request_material'];
@@ -166,7 +170,13 @@ frappe.ui.form.on("Repair Request", {
                                 frappe.msgprint(__("Please provide Fault Category and Description before requesting parts."));
                                 return;
                             }
-
+                            // Check if all spares have required_qty > 0
+                            for (let row of frm.doc.required_parts) {
+                                if (!row.required_qty || row.required_qty <= 0) {
+                                    frappe.msgprint(__("All required parts must have a quantity greater than 0."));
+                                    return;
+                                }
+                            }
                             frappe.call({
                                 method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.request_parts_from_warehouse",
                                 args: { 
@@ -606,6 +616,7 @@ function calculate_totals(frm, cdt, cdn) {
     let total = 0;
     let total_cost = 0;
     let labor_charge = frm.doc.labor_charge || 0;
+    let service_charge = frm.doc.service_charge || 0;
     (frm.doc.required_parts || []).forEach(row => {
         if (row.required_qty && row.price) {
             total += row.required_qty * row.price;
@@ -622,13 +633,13 @@ function calculate_totals(frm, cdt, cdn) {
     });
 
     if (frm.doc.resolution !== 'Parts replacement') {
-        total = 0;
         total_cost = 0;
     }
     if(frm.doc.repair_type === 'In Warranty')  {
         total = 0;
     }
     // Set total field value in parent doc
+    total += service_charge;
     frm.set_value('total', total);
     frm.set_value('total_cost', total_cost);
     frm.set_value('profit', labor_charge + total - total_cost);
@@ -716,8 +727,8 @@ function apply_permissions_mirror(frm) {
         callback(r) {
             if (!r.message) return;
             const perms = r.message;
-            console.log("Edit Permissions Mirror:");
-            console.log(perms);
+            //console.log("Edit Permissions Mirror:");
+           // console.log(perms);
 
             // Enable the form first to keep Save button visible
             //frm.set_read_only(false);

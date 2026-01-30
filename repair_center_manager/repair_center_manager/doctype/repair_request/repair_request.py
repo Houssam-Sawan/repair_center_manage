@@ -620,6 +620,9 @@ def complete_repair(docname):
 	if doc.status != "Parts Allocated" and doc.resolution == "Parts Replacement":
 		frappe.throw("Can only allocate parts when status is 'Parts Allocated'.")
 
+	if doc.repair_type == "Out of Warranty" and doc.total == 0:
+		frappe.throw("Cannot complete repair with 0 total for 'Out of Warranty' repairs.")
+		
 	sc_details = frappe.get_doc("Service Center", doc.service_center)
 	if not sc_details.store_warehouse or not sc_details.wip_warehouse:
 		frappe.throw("Service Center is missing Store or WIP Warehouse configuration.")
@@ -646,7 +649,7 @@ def complete_repair_without_parts(docname):
 	if doc.status != "In Progress":
 		frappe.throw("Can only complete repair when status is 'In Progress'.")
 
-	if doc.repair_type == "Out of Warranty" and doc.total == 0:
+	if doc.repair_type != "In Warranty" and doc.total == 0:
 		frappe.throw("Cannot complete repair with 0 total for 'Out of Warranty' repairs.")
 	#doc.restrict_edits()  # Ensure no edits are made before completing repair
 	# Update status on Repair Request
@@ -764,6 +767,15 @@ def recieve_payment(docname):
 			"item_code": "Service Charge",  # Assuming a generic item for labor charge
 			"qty": 1,
 			"rate": doc.labor_charge,
+			"warehouse": sc_details.wip_warehouse
+		})
+
+	#add Service charge item if applicable
+	if doc.service_charge and doc.service_charge > 0:
+		si.append("items", {
+			"item_code": "Service Charge",  # Assuming a generic item for service charge
+			"qty": 1,
+			"rate": doc.service_charge,
 			"warehouse": sc_details.wip_warehouse
 		})
 

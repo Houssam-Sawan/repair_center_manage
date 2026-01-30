@@ -31,12 +31,14 @@
   {
    "fieldname": "available_qty",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Available QTY",
    "read_only": 1
   },
   {
    "fieldname": "price",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Price"
   },
   {
@@ -103,7 +105,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-30 17:33:32.887188",
+ "modified": "2026-01-30 20:50:19.489450",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request Material",

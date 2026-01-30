@@ -3,7 +3,7 @@
 
 // render
 frappe.listview_settings["Repair Request"] = {
-	
+
     add_fields: ['ID', 'status', 'assigned_technician', 'service_center'],
     has_indicator_for_draft: true,
     hide_name_column: true, // hide the last column which shows the `name`
@@ -25,7 +25,19 @@ frappe.listview_settings["Repair Request"] = {
 			"Cancelled": "red"
 		};
 		return [__(doc.status), status_colors[doc.status], "status,=," + doc.status];
-	}
+	},
+	    refresh: function(listview) {
+        // Use a slight delay to ensure the button is rendered
+        setTimeout(() => {
+            // Find the action item by its data-label and remove its parent elements
+			if (!frappe.user.has_role('System Manager')) {
+            	$('.btn-primary').hide();
+				//listview.page.actions.hide();
+			}
+        }, 500);
+    },
+
+
 	//right_column: "grand_total",
 
 
