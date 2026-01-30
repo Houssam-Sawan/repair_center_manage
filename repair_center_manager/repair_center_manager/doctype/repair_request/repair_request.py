@@ -21,6 +21,8 @@ class RepairRequest(Document):
 		if self.is_new():
 			self.status = "Open"
 		
+		if not(self.cable or self.charger or self.carton or self.none):
+			frappe.throw(_("Please select at least one of the accessories (Cable, Charger, Carton, None)"))
 		#if "Service Center Warehouse Manager" in frappe.get_roles(frappe.session.user) :
 			#self.restrict_edits()
 		#if self.status in ["In Progress","Pending Parts Allocation", "Pending for Spare Parts", "Parts Allocated"] and "Receptionist" in frappe.get_roles(frappe.session.user) :
@@ -37,9 +39,6 @@ class RepairRequest(Document):
 	def before_save(self):
 		self.log_status_change()
 		
-
-
-
 
 	def on_submit(self):
 		# Add any logic for on submit (if used)
@@ -647,6 +646,8 @@ def complete_repair_without_parts(docname):
 	if doc.status != "In Progress":
 		frappe.throw("Can only complete repair when status is 'In Progress'.")
 
+	if doc.repair_type == "Out of Warranty" and doc.total == 0:
+		frappe.throw("Cannot complete repair with 0 total for 'Out of Warranty' repairs.")
 	#doc.restrict_edits()  # Ensure no edits are made before completing repair
 	# Update status on Repair Request
 	doc.status = "Repaired"
@@ -973,11 +974,14 @@ def get_client_edit_matrix(doctype, docname):
     # Aggregate permissions (same logic as validator)
     allowed_tabs = set()
     allowed_fields = set()
+    skipped_fields = set()
     allowed_child_fields = {}
 
     for role in roles:
         allowed_tabs |= rules["tabs"].get(status, {}).get(role, set())
         allowed_fields |= rules["fields"].get(status, {}).get(role, set())
+        skipped_fields |= rules["skipped"]["parent"]
+        allowed_fields |= skipped_fields
         for parent, fields in rules["child_fields"].get(status, {}).get(role, {}).items():
             allowed_child_fields.setdefault(parent, set()).update(fields)
 

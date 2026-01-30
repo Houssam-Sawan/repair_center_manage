@@ -21,12 +21,14 @@
    "options": "DocType"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "full_access_role_rules",
    "fieldtype": "Table",
    "label": "Full Access Role Rules",
    "options": "Full Access Role Rule"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "tab_edit_rules",
    "fieldtype": "Table",
    "label": "Tab Edit Rules",
@@ -40,18 +42,21 @@
    "options": "Field Edit Rule"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "child_field_edit_rules",
    "fieldtype": "Table",
    "label": "Child Field Edit Rules",
    "options": "Child Field Edit Rule"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "skipped_fields",
    "fieldtype": "Table",
    "label": "Skipped Fields",
    "options": "Skipped Field"
   },
   {
+   "allow_bulk_edit": 1,
    "fieldname": "status_lock_rules",
    "fieldtype": "Table",
    "label": "Status Lock Rules",
@@ -62,7 +67,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-29 15:18:05.413844",
+ "modified": "2026-01-30 15:54:05.943256",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Document Edit Control Settings",

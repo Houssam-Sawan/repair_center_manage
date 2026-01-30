@@ -32,8 +32,38 @@ frappe.ui.form.on("Repair Request", {
     },
 
     resolution: function(frm, cdt, cdn) {
+        // 1. Initialize the tracker if it doesn't exist (prevents 'undefined' errors)
+        if (!frm._original_resolution) {
+            frm._original_resolution = frm.doc.resolution;
+        }
+
+        let current_val = frm.doc.resolution;
+        let previous_val = frm._original_resolution;
+
+        // 2. Logic check
+        if (previous_val === "Parts replacement" && current_val !== "Parts replacement") {
+            frappe.confirm(
+                "Changing resolution from 'Parts replacement' to another value will reset the required parts table. Do you want to continue?",
+                () => {
+                    // If confirmed: Clear table and update our tracker
+                    frm.clear_table('required_parts');
+                    frm.refresh_field('required_parts');
+                    calculate_totals(frm);
+                    frm._original_resolution = current_val; 
+                },
+                () => {
+                    // If cancelled: Revert UI and do NOT update tracker
+                    // {silent: true} prevents the trigger from firing itself in an infinite loop
+                    frm.set_value('resolution', previous_val);
+                }
+            );
+        } else {
+            // If it wasn't a "Parts replacement" switch, just update the tracker for the next change
+            frm._original_resolution = current_val;
+        }
+
         calculate_labor_charge(frm);
-    },   
+    },
     status: function(frm) {
         //apply_permissions_mirror(frm);
     },
@@ -476,7 +506,7 @@ frappe.ui.form.on('Repair Request Material', {
                             frappe.model.set_value(cdt, cdn, 'available_qty', r.message);
                         }else {
                             frappe.model.set_value(cdt, cdn, 'available_qty', 0);
-                            frapppe.model.set_value(cdt, cdn, 'required_qty', 0);
+                            frappe.model.set_value(cdt, cdn, 'required_qty', 0);
                             
                         }
                     }
@@ -495,6 +525,7 @@ frappe.ui.form.on('Repair Request Material', {
                     },
                     callback: function(r) {
                         if (r.message) {
+                            console.log("Item cost price: " + r.message);
                             frappe.model.set_value(cdt, cdn, 'item_cost', r.message);
                         }
                         else {
@@ -539,19 +570,19 @@ frappe.ui.form.on('Repair Request Material', {
      */
     required_qty: function(frm) {
         // This is a placeholder for any logic on table refresh
-        frappe.msgprint(__('Required Parts table refreshed'));
+        //frappe.msgprint(__('Required Parts table refreshed'));
         calculate_totals(frm);
     },
    
     item_cost: function(frm) {
         // This is a placeholder for any logic on table refresh
-        frappe.msgprint(__('Required Parts table refreshed'));
+       // frappe.msgprint(__('Required Parts table refreshed'));
         calculate_totals(frm);
     },
     
     price: function(frm) {
         // This is a placeholder for any logic on table refresh
-        frappe.msgprint(__('Required Parts table refreshed'));
+        //frappe.msgprint(__('Required Parts table refreshed'));
         calculate_totals(frm);
     },
 
@@ -696,6 +727,7 @@ function apply_permissions_mirror(frm) {
                // lock_all_fields(frm);
                frm.toggle_enable(all_fields, false);
             } else {
+                let all_allowed_fields = perms.allowed_fields.concat(perms.skipped_fields);
                 let fields_to_lock = frm.meta.fields.map(f => f.fieldname).filter(name => !perms.allowed_fields.includes(name));
                 
                 frm.toggle_enable(fields_to_lock, false);
