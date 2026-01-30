@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_copy": 1,
  "allow_events_in_timeline": 1,
  "allow_import": 1,
  "autoname": "format:RR-{service_center_abbr}-{YYYY}-{MM}-{DD}-{#####}",
@@ -543,7 +542,7 @@
   }
  ],
  "make_attachments_public": 1,
- "modified": "2026-01-30 19:12:45.911553",
+ "modified": "2026-01-31 00:42:11.934815",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",

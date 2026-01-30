@@ -49,13 +49,14 @@ class RepairRequest(Document):
 
 	def Validate_sn(self):
 		# IMEI/Serial Number validation
-		if len(self.serial_no) < 11 and self.serial_no != "NA":
-			frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters or 'NA'."))
+		if len(self.serial_no) < 11:
+			if self.status not in ["Not Saved", "Open", "In Progress"] and self.serial_no == "NA":
+				frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters or 'NA'."))
 		
 		# New IMEI/Serial Number validation for swapped devices
 		if self.new_imei:
-			if  self.resolution == "Swap" and self.status == "Swap Approved" and len(self.new_imei) < 11 :
-				frappe.throw(_("Invalid SN/IMEI number.\nMust be at least 11 characters."))
+			if  self.resolution == "Swap" and self.status == "Swap Approved" and len(self.new_imei) < 11 and "brand_manager" not in frappe.get_roles(frappe.session.user):
+				frappe.throw(_("Invalid New SN/IMEI number.\nMust be at least 11 characters."))
 				
 	def restrict_edits(self):
 		

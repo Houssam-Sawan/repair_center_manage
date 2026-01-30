@@ -446,7 +446,11 @@ frappe.ui.form.on("Repair Request", {
                             message: __('Please save the document before processing, as there are unsaved changes.')
                         });
                         return; // Stop the execution
-                    }                    
+                    }   
+                    if (frm.doc.resolution === 'Swap' && !frm.doc.new_imei) {       
+                        frappe.msgprint(__("Please provide the New IMEI/Serial Number before delivering the swapped device."));
+                        return;
+                    }         
                     frappe.call({
                         method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.deliver_to_customer",
                         args: { 
