@@ -31,8 +31,8 @@ frappe.listview_settings["Repair Request"] = {
         setTimeout(() => {
             // Find the action item by its data-label and remove its parent elements
 			if (!frappe.user.has_role('System Manager')) {
-            	$('.btn-primary').hide();
-				//listview.page.actions.hide();
+            	//$('.btn-primary').hide();
+				listview.page.actions.hide();
 			}
         }, 500);
     },
