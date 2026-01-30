@@ -8,6 +8,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "details_tab",
   "service_center",
   "repair_type",
   "column_break_puhp",
@@ -60,6 +61,7 @@
   "section_break_njur",
   "new_imei",
   "section_break_rjso",
+  "service_charge",
   "total",
   "column_break_swbu",
   "labor_charge",
@@ -284,6 +286,7 @@
   {
    "fieldname": "internal_log_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Internal Log"
   },
   {
@@ -439,7 +442,9 @@
    "depends_on": "eval:frappe.user.has_role(\"Service Manager\")",
    "fieldname": "total_cost",
    "fieldtype": "Currency",
-   "label": "Total Cost"
+   "label": "Total Cost",
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "fieldname": "column_break_xucw",
@@ -449,7 +454,8 @@
    "depends_on": "eval:frappe.user.has_role(\"Service Manager\")",
    "fieldname": "profit",
    "fieldtype": "Currency",
-   "label": "Profit"
+   "label": "Profit",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_rjso",
@@ -502,6 +508,17 @@
    "label": "Labor Charge USD",
    "options": "USD",
    "read_only": 1
+  },
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "service_charge",
+   "fieldtype": "Currency",
+   "label": "Service Charge",
+   "mandatory_depends_on": "eval:doc.repair_type != \"In Warranty\" && doc.resolution == 'Clean' || doc.resolution == 'Software' "
   }
  ],
  "grid_page_length": 50,
@@ -524,7 +541,7 @@
    "link_fieldname": "custom_repair_request"
   }
  ],
- "modified": "2026-01-25 16:09:50.063077",
+ "modified": "2026-01-30 17:54:15.883408",
  "modified_by": "Administrator",
  "module": "Repair Center Manager",
  "name": "Repair Request",
@@ -542,6 +559,18 @@
    "role": "System Manager",
    "share": 1,
    "submit": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 2,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
    "write": 1
   }
  ],

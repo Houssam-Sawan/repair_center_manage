@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-28 12:12:17.933199",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "apply_to_doctype",
+  "status_lock_rules",
+  "full_access_role_rules",
+  "tab_edit_rules",
+  "field_edit_rules",
+  "child_field_edit_rules",
+  "skipped_fields"
+ ],
+ "fields": [
+  {
+   "fieldname": "apply_to_doctype",
+   "fieldtype": "Link",
+   "label": "Apply to Doctype",
+   "options": "DocType"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "full_access_role_rules",
+   "fieldtype": "Table",
+   "label": "Full Access Role Rules",
+   "options": "Full Access Role Rule"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "tab_edit_rules",
+   "fieldtype": "Table",
+   "label": "Tab Edit Rules",
+   "options": "Tab Edit Rule"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "field_edit_rules",
+   "fieldtype": "Table",
+   "label": "Field Edit Rules",
+   "options": "Field Edit Rule"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "child_field_edit_rules",
+   "fieldtype": "Table",
+   "label": "Child Field Edit Rules",
+   "options": "Child Field Edit Rule"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "skipped_fields",
+   "fieldtype": "Table",
+   "label": "Skipped Fields",
+   "options": "Skipped Field"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "status_lock_rules",
+   "fieldtype": "Table",
+   "label": "Status Lock Rules",
+   "options": "Status Lock Rule"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-01-30 15:54:05.943256",
+ "modified_by": "Administrator",
+ "module": "Repair Center Manager",
+ "name": "Document Edit Control Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

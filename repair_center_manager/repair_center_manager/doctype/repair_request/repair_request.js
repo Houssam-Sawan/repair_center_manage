@@ -32,25 +32,58 @@ frappe.ui.form.on("Repair Request", {
     },
 
     resolution: function(frm, cdt, cdn) {
+        // 1. Initialize the tracker if it doesn't exist (prevents 'undefined' errors)
+        if (!frm._original_resolution) {
+            frm._original_resolution = frm.doc.resolution;
+        }
+
+        let current_val = frm.doc.resolution;
+        let previous_val = frm._original_resolution;
+
+        // 2. Logic check
+        if (previous_val === "Parts replacement" && current_val !== "Parts replacement") {
+            frappe.confirm(
+                "Changing resolution from 'Parts replacement' to another value will reset the required parts table. Do you want to continue?",
+                () => {
+                    // If confirmed: Clear table and update our tracker
+                    frm.clear_table('required_parts');
+                    frm.refresh_field('required_parts');
+                    calculate_totals(frm);
+                    frm._original_resolution = current_val; 
+                },
+                () => {
+                    // If cancelled: Revert UI and do NOT update tracker
+                    // {silent: true} prevents the trigger from firing itself in an infinite loop
+                    frm.set_value('resolution', previous_val);
+                }
+            );
+        } else {
+            // If it wasn't a "Parts replacement" switch, just update the tracker for the next change
+            frm._original_resolution = current_val;
+        }
+
         calculate_labor_charge(frm);
     },
-
-	    /**
-     * Onload: Set filters
-     */
+    status: function(frm) {
+        //apply_permissions_mirror(frm);
+    },
     onload: function(frm) {
-
-
+        frm.set_df_property('repair_request_material', 'read_only', 1);
+        //apply_permissions_mirror(frm);
+        console.log("Onload called");
     },
  	refresh: function(frm) {
 
-        
+        let table = frm.fields_dict['repair_request_material'];
+        if (table?.grid?.wrapper) {
+            table.grid.wrapper.find('.grid-add-row').hide() ;
+        }
 /*         frm.add_custom_button(__('Test Button'), function() {
             test_button();
         }).addClass('btn-secondary');
  */
         frm.set_intro("");
-
+        apply_permissions_mirror(frm);
 
         // Filter for assigned_technician
         // Only show users who are 'Technician' role AND are linked to the selected Service Center 
@@ -473,7 +506,7 @@ frappe.ui.form.on('Repair Request Material', {
                             frappe.model.set_value(cdt, cdn, 'available_qty', r.message);
                         }else {
                             frappe.model.set_value(cdt, cdn, 'available_qty', 0);
-                            frapppe.model.set_value(cdt, cdn, 'required_qty', 0);
+                            frappe.model.set_value(cdt, cdn, 'required_qty', 0);
                             
                         }
                     }
@@ -492,6 +525,7 @@ frappe.ui.form.on('Repair Request Material', {
                     },
                     callback: function(r) {
                         if (r.message) {
+                            console.log("Item cost price: " + r.message);
                             frappe.model.set_value(cdt, cdn, 'item_cost', r.message);
                         }
                         else {
@@ -536,19 +570,19 @@ frappe.ui.form.on('Repair Request Material', {
      */
     required_qty: function(frm) {
         // This is a placeholder for any logic on table refresh
-        frappe.msgprint(__('Required Parts table refreshed'));
+        //frappe.msgprint(__('Required Parts table refreshed'));
         calculate_totals(frm);
     },
    
     item_cost: function(frm) {
         // This is a placeholder for any logic on table refresh
-        frappe.msgprint(__('Required Parts table refreshed'));
+       // frappe.msgprint(__('Required Parts table refreshed'));
         calculate_totals(frm);
     },
     
     price: function(frm) {
         // This is a placeholder for any logic on table refresh
-        frappe.msgprint(__('Required Parts table refreshed'));
+        //frappe.msgprint(__('Required Parts table refreshed'));
         calculate_totals(frm);
     },
 
@@ -658,4 +692,63 @@ function calculate_labor_charge(frm) {
     frm.set_value('profit', labor_charge + total - total_cost);
     refresh_field('profit');
     refresh_field('labor_charge');
+}
+
+
+function apply_permissions_mirror(frm) {
+  
+
+    if (frm.is_new()){
+        console.log("New document - skipping permissions mirror");
+        let filtered_fields = get_fields_between_two_fields(frm.meta.fields.map(f => f.fieldname), 'tab_2_tab', 'notes_tab');
+        frm.toggle_enable(filtered_fields, false);
+        console.log("Locked fields on new document:");
+        console.log(filtered_fields);
+        return;
+    } 
+
+    frappe.call({
+        method: "repair_center_manager.repair_center_manager.doctype.repair_request.repair_request.get_client_edit_matrix",
+        args: {
+            doctype: frm.doctype,
+            docname: frm.doc.name
+        },
+        callback(r) {
+            if (!r.message) return;
+            const perms = r.message;
+            console.log("Edit Permissions Mirror:");
+            console.log(perms);
+
+            // Enable the form first to keep Save button visible
+            //frm.set_read_only(false);
+
+            // --- 1️⃣ Apply locking ---
+            if (perms.locked) {
+               // lock_all_fields(frm);
+               frm.toggle_enable(all_fields, false);
+            } else {
+                let all_allowed_fields = perms.allowed_fields.concat(perms.skipped_fields);
+                let fields_to_lock = frm.meta.fields.map(f => f.fieldname).filter(name => !perms.allowed_fields.includes(name));
+                
+                frm.toggle_enable(fields_to_lock, false);
+            }
+            
+
+        }
+    });
+}
+
+
+//let all_fields = frm.meta.fields.map(f => f.fieldname);
+
+function get_fields_between_two_fields(all_fields, start_field, end_field) {
+    let fields = all_fields;
+    let start_index = fields.indexOf(start_field);
+    let end_index = fields.indexOf(end_field);
+
+    if (start_index === -1 || end_index === -1 || start_index >= end_index) {
+        return [];
+    }
+
+    return fields.slice(start_index, end_index );
 }

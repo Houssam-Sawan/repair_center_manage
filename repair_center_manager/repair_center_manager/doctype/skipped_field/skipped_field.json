@@ -1,0 +1,53 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-28 12:52:14.537042",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "fieldname",
+  "parent_fieldname",
+  "is_child"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "is_child",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Is Child"
+  },
+  {
+   "fieldname": "parent_fieldname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Parent Field Name"
+  },
+  {
+   "fieldname": "fieldname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Field Name",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-28 13:02:58.513559",
+ "modified_by": "Administrator",
+ "module": "Repair Center Manager",
+ "name": "Skipped Field",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

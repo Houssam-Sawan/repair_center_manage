@@ -1,0 +1,65 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-28 12:49:56.467437",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "status",
+  "role",
+  "parent_fieldname",
+  "child_fieldname"
+ ],
+ "fields": [
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Status",
+   "options": "Not Saved\nOpen\nIn Progress\nPending Parts Allocation\nPending for Spare Parts\nPending For Swap Approval\nSwap Approved\nParts Allocated\nRepaired\nPaid\nDelivered\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Role",
+   "options": "Role",
+   "reqd": 1
+  },
+  {
+   "fieldname": "parent_fieldname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Parent Field Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "child_fieldname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Child Field Name",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-28 13:02:25.400606",
+ "modified_by": "Administrator",
+ "module": "Repair Center Manager",
+ "name": "Child Field Edit Rule",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
